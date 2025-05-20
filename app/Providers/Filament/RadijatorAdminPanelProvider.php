@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -20,9 +21,21 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class RadijatorAdminPanelProvider extends PanelProvider
 {
+    // public function boot(): void
+    // {
+    //     Filament::serving(function () {
+    //         Filament::registerRenderHook(
+    //             'panels::global-search.before',
+    //             fn () => view('filament.custom-logo')
+    //         );
+    //     });
+    // }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
+            ->brandLogo(asset('images/logo.png'))
+            ->brandName('Radijator Inženjering')
             ->default()
             ->id('radijator_admin')
             ->path('radijator_admin')

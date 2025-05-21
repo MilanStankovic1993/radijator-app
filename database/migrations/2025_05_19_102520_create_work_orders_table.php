@@ -13,9 +13,15 @@ return new class extends Migration
     {
         Schema::create('work_orders', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->string('work_order_number')->nullable(); 
+            $table->date('launch_date')->nullable();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Ko je izdao
+            $table->date('scheduled_at')->nullable(); // Datum lansiranja
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->enum('status', ['aktivan', 'zavrsen', 'neaktivan'])->default('aktivan'); // Status
+            $table->timestamps(); // created_at i updated_at
         });
-    }
+        }
 
     /**
      * Reverse the migrations.

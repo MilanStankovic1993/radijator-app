@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
-use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -15,8 +14,8 @@ use Filament\Forms\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Traits\HasResourcePermissions;
-use App\Filament\Resources\ProductResource\RelationManagers\WorkPhasesRelationManager;
-
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Repeater;
 
 class ProductResource extends Resource
 {
@@ -24,8 +23,9 @@ class ProductResource extends Resource
 
     protected static string $resourceName = 'products';
     protected static ?string $model = Product::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static ?string $navigationLabel = 'Gotovi proizvodi';
 
     public static function form(Form $form): Form
     {
@@ -33,7 +33,7 @@ class ProductResource extends Resource
             ->schema([
                 Tabs::make('Product Tabs')
                     ->tabs([
-                        Tab::make('Edit Product')
+                        Tab::make('Izmene Kotla')
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->label('Naziv')
@@ -60,24 +60,39 @@ class ProductResource extends Resource
                                     ->default(true),
                             ]),
 
-                        Tab::make('Radne faze')
+                        Tab::make('Radne faze u proizvodji')
                             ->schema([
-                                // možeš dodati info ili komponentu za prikaz radnih faza ako želiš
-                                Forms\Components\Placeholder::make('info')->content('Radne faze su dostupne kroz relacije.'),
+                                Repeater::make('workPhases')
+                                    ->label('Radne faze')
+                                    ->relationship('workPhases')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('name')
+                                            ->label('Naziv faze')
+                                            ->required(),
+                                        Forms\Components\Textarea::make('description')
+                                            ->label('Opis')
+                                            ->rows(2),
+                                    ])
+                                    ->columns(2)
+                                    ->orderable()
+                                    ->defaultItems(0)
+                                    ->addActionLabel('Dodaj fazu'),
                             ]),
 
                         Tab::make('Import Sastavnice')
                             ->schema([
                                 Forms\Components\FileUpload::make('import_file')
                                     ->label('Uvezi sastavnicu')
-                                    ->acceptedFileTypes([
-                                        '.xlsx',
-                                        '.xls',
-                                        '.csv',
-                                        '.txt',
-                                        '.json',
-                                        '.xml',
-                                    ]),
+                                    ->directory('uploads') // folder u storage/app/public/uploads
+                                    ->rules([
+                                        'file',
+                                        'mimes:csv,xlsx,xls,json,xml,txt', // ovde mora biti xlsx da bi prihvatio Excel fajlove
+                                    ])
+                                    ->visibility('public')
+                                    ->preserveFilenames()  // da ne menja ime fajla
+                                    ->disk('public')  // Obavezno ako koristiš Storage disk 'public'
+                                    ->maxSize(5120)
+                                    ->required(false)
                             ]),
                     ])
             ]);
@@ -90,6 +105,17 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('name')->label('Naziv')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('code')->label('Šifra')->sortable(),
                 Tables\Columns\TextColumn::make('price')->label('Cena')->sortable(),
+                // Tables\Columns\TextColumn::make('import_file')
+                // ->label('Sastavnica')
+                // ->formatStateUsing(function ($state) {
+                //     if ($state) {
+                //         $url = asset('storage/' . $state);
+                //         return "<a href=\"{$url}\" target=\"_blank\" class=\"text-primary-600 hover:underline\">Prikaži fajl</a>";
+                //     } else {
+                //         return '-';
+                //     }
+                // })
+                // ->html(), // dozvoljava HTML u koloni
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktivan')
                     ->boolean(),
@@ -98,6 +124,8 @@ class ProductResource extends Resource
                 Tables\Filters\TernaryFilter::make('is_active')->label('Aktivan'),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\DeleteAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -108,7 +136,7 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
-            WorkPhasesRelationManager::class,
+            // I dalje može ostati za prikaz u posebnom tabu ako želiš u budućnosti
         ];
     }
 

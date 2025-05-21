@@ -14,6 +14,10 @@ return new class extends Migration
         Schema::create('work_phases', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->text('description')->nullable();
+            $table->boolean('is_completed')->default(false);
+            // $table->unsignedInteger('order')->nullable();
+            $table->integer('sort')->nullable();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

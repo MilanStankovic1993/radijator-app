@@ -6,14 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class WorkPhase extends Model
 {
-        // Dodaj ovde sva polja koja možeš masovno dodeljivati (mass assign)
-    protected $fillable = [
-        'name',
-        'description',
-    ];
+    protected $fillable = ['name', 'description', 'product_id', 'is_completed'];
+
     public function product()
     {
-        
-        return $this->belongsTo(\App\Models\Product::class);
+        return $this->belongsTo(Product::class);
     }
 }

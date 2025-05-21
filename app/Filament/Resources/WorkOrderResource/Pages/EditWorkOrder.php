@@ -10,10 +10,22 @@ class EditWorkOrder extends EditRecord
 {
     protected static string $resource = WorkOrderResource::class;
 
+    
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\Action::make('back')
+                ->label('Nazad')
+                ->url(fn () => WorkOrderResource::getUrl('index'))
+                ->color('secondary')
+                ->icon('heroicon-o-arrow-left'),
+            Actions\DeleteAction::make(), // Dodaje dugme "Delete" i u formi
+            
         ];
     }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
 }

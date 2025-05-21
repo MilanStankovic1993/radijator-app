@@ -23,10 +23,10 @@ class UserResource extends Resource
     protected static string $resourceName = 'users';
     protected static ?string $model = User::class;
 
+    protected static ?int $navigationSort = 0;
     // Navigacija
     protected static ?string $navigationIcon = 'heroicon-o-user';
-    protected static ?string $navigationLabel = 'Korisnici';
-    protected static ?string $navigationGroup = 'Administracija';
+    protected static ?string $navigationLabe = 'Korisnici';
 
     // Eager load relacija roles da bi tabela radila sa njima
     public static function getEloquentQuery(): Builder

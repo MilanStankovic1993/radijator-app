@@ -17,6 +17,7 @@ return new class extends Migration
         $table->string('code')->unique();
         $table->text('description')->nullable();
         $table->text('specifications')->nullable();
+        $table->string('import_file')->nullable();
         $table->decimal('price', 10, 2);
         $table->string('status')->default('active'); // <- ovo dodaj
         $table->timestamps();

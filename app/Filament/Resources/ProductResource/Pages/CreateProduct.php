@@ -2,9 +2,13 @@
 
 namespace App\Filament\Resources\ProductResource\Pages;
 
+
+use Illuminate\Support\Facades\Notification as LaravelNotification;
+use Filament\Notifications\Notification as FilamentNotification;
+use App\Notifications\ProductCreatedNotification;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\ProductResource;
 use Filament\Actions;
-use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel; // ako koristiš Laravel Excel
 use Illuminate\Support\Facades\Log;
@@ -27,6 +31,13 @@ class CreateProduct extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function afterCreate(): void
+    {
+        $users = \App\Models\User::all(); // ili filtriraj korisnike kojima šalješ notifikaciju
+
+        LaravelNotification::send($users, new ProductCreatedNotification($this->record, Auth::user()));
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
@@ -73,7 +84,7 @@ class CreateProduct extends CreateRecord
                     break;
             }
 
-            Notification::make()
+            FilamentNotification::make()
                 ->title('Uspešan import fajla!')
                 ->success()
                 ->send();

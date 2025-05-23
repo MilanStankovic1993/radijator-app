@@ -6,10 +6,11 @@ use Illuminate\Support\ServiceProvider;
 use App\Models\Product;
 use App\Observers\ProductObserver;
 
-class AppServiceProvider extends ServiceProvider
+
+class FilamentServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Register services.
      */
     public function register(): void
     {
@@ -17,10 +18,10 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Bootstrap services.
      */
     public function boot(): void
     {
-        Product::observe(ProductObserver::class);
+        // Product::observe(ProductObserver::class);
     }
 }

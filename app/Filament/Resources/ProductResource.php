@@ -42,6 +42,10 @@ class ProductResource extends Resource
                                 Forms\Components\TextInput::make('code')
                                     ->label('Šifra')
                                     ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->validationMessages([
+                                        'unique' => 'Artikal sa ovim kodom vec postoji.',
+                                    ])
                                     ->maxLength(100),
                                 Forms\Components\Textarea::make('description')
                                     ->label('Opis')

@@ -40,6 +40,7 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ->id('radijator_admin')
             ->path('radijator_admin')
             ->login()
+            ->databaseNotifications()
             ->colors([
                 'primary' => Color::Amber,
             ])

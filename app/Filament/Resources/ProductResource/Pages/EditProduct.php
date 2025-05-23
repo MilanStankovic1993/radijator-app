@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\ProductResource\Pages;
 
+use App\Notifications\ProductUpdatedNotification;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification as LaravelNotification;
+use Filament\Notifications\Notification as FilamentNotification;
 use App\Filament\Resources\ProductResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
-use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel; // ako koristiš Laravel Excel
 use Illuminate\Support\Facades\Log;
@@ -29,6 +32,13 @@ class EditProduct extends EditRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function afterSave(): void
+    {
+        $users = \App\Models\User::all();
+
+        LaravelNotification::send($users, new ProductUpdatedNotification($this->record, Auth::user()));
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
@@ -75,7 +85,7 @@ class EditProduct extends EditRecord
                     break;
             }
 
-            Notification::make()
+            FilamentNotification::make()
                 ->title('Uspešan import fajla!')
                 ->success()
                 ->send();

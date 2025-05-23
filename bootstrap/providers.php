@@ -2,6 +2,6 @@
 
 return [
     App\Providers\AppServiceProvider::class,
-    App\Providers\FilamentServiceProvider::class,
-    App\Providers\Filament\RadijatorAdminPanelProvider::class,
+    App\Providers\Filament\AdminPanelProvider::class,
+    \SocialiteProviders\Manager\ServiceProvider::class, // add
 ];

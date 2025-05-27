@@ -17,4 +17,9 @@ class Product extends Model
     {
         return $this->hasMany(WorkOrder::class);
     }
+
+    public function warehouse()
+    {
+        return $this->hasOne(Warehouse::class);
+    }
 }

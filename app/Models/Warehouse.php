@@ -6,5 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Warehouse extends Model
 {
-    //
+    protected $fillable = ['product_id', 'quantity'];
+
+    public function product()
+    {
+        return $this->belongsTo(\App\Models\Product::class);
+    }
 }

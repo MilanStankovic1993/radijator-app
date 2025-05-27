@@ -9,6 +9,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListServices extends ListRecords
 {
     protected static string $resource = ServiceResource::class;
+    // protected static string $title = 'Lista reklamacija';
 
     protected function getHeaderActions(): array
     {

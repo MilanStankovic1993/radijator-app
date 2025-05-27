@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\HasCommonFeatures;
 
 class WorkOrderItem extends Model
 {
+    use HasCommonFeatures;
     use HasFactory;
 
     protected $fillable = [

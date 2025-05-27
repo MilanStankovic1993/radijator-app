@@ -21,8 +21,16 @@ class WarehouseResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-archive-box'; // ikonica
     protected static ?string $navigationLabel = 'Magacin';
     protected static ?string $modelLabel = 'Magacin';
-    protected static ?int $navigationSort = 3;
+    // protected static ?int $navigationSort = 3;
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Magacin';
+    }
 
+    public static function getNavigationSort(): ?int
+    {
+        return 2;
+    }
     public static function form(Form $form): Form
     {
         return $form

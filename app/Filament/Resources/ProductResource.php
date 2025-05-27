@@ -23,10 +23,17 @@ class ProductResource extends Resource
 
     protected static string $resourceName = 'products';
     protected static ?string $model = Product::class;
-    protected static ?int $navigationSort = 1;
+    // protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-cube';
     protected static ?string $navigationLabel = 'Gotovi proizvodi';
-
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Proizvodnja';
+    }
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
     public static function form(Form $form): Form
     {
         return $form

@@ -6,10 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\HasCommonFeatures;
 
 class WorkOrder extends Model
 {
     use HasFactory;
+    use HasCommonFeatures;
 
     protected $fillable = [
         'work_order_number',
@@ -19,6 +21,11 @@ class WorkOrder extends Model
         'status',
         'quantity',
     ];
+
+    public function orderRequest()
+    {
+        return $this->belongsTo(OrderRequest::class);
+    }
 
     public function product()
     {

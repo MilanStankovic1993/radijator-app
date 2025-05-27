@@ -12,9 +12,11 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Traits\HasResourcePermissions;
 
 class ProductionTrackingResource extends Resource
 {
+    use HasResourcePermissions;
     protected static ?string $model = ProductionTracking::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

@@ -24,9 +24,10 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?int $navigationSort = 0;
+
     // Navigacija
     protected static ?string $navigationIcon = 'heroicon-o-user';
-    protected static ?string $navigationLabe = 'Korisnici';
+    protected static ?string $navigationLabel = 'Korisnici';
 
     // Eager load relacija roles da bi tabela radila sa njima
     public static function getEloquentQuery(): Builder
@@ -34,6 +35,15 @@ class UserResource extends Resource
         return parent::getEloquentQuery()->with('roles', 'permissions');
     }
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Administracija';
+    }
+    
+    public static function getNavigationSort(): ?int
+    {
+        return 0;
+    }
     public static function form(Form $form): Form
     {
         return $form

@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('order_requests', function (Blueprint $table) {
             $table->id();
+            $table->string('customer_name');
+            $table->string('status')->default('draft');
             $table->timestamps();
         });
     }

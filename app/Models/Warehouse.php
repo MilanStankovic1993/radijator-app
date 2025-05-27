@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasCommonFeatures;
 
 class Warehouse extends Model
 {
+    use HasCommonFeatures;
     protected $fillable = ['product_id', 'quantity'];
 
     public function product()

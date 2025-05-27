@@ -25,8 +25,15 @@ class WorkOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationLabel = 'Radni nalozi';
-    protected static ?int $navigationSort = 2;
-
+    // protected static ?int $navigationSort = 2;
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Proizvodnja';
+    }
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -127,44 +134,41 @@ class WorkOrderResource extends Resource
         ]);
     }
 
-public static function table(Table $table): Table
-{
-    return $table
-        ->columns([
-            TextColumn::make('work_order_number')->label('Broj')->searchable()->sortable(),
-            TextColumn::make('user.name')->label('Izdao')->searchable()->sortable(),
-            TextColumn::make('product.name')->label('Artikal')->searchable()->sortable(),
-            TextColumn::make('launch_date')->label('Datum lansiranja')->date(),
-            BadgeColumn::make('status')->label('Status')->colors([
-                'aktivan' => 'success',
-                'neaktivan' => 'danger',
-                'zavrsen' => 'warning',
-            ]),
-            TextColumn::make('created_at')->label('Kreirano')->since(),
-        ])
-        ->filters([
-            Tables\Filters\SelectFilter::make('status')
-                ->label('Status')
-                ->options([
-                    'aktivan' => 'Aktivan',
-                    'zavrsen' => 'Završen',
-                    'neaktivan' => 'Neaktivan',
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('work_order_number')->label('Broj')->searchable()->sortable(),
+                TextColumn::make('user.name')->label('Izdao')->searchable()->sortable(),
+                TextColumn::make('product.name')->label('Artikal')->searchable()->sortable(),
+                TextColumn::make('launch_date')->label('Datum lansiranja')->date(),
+                BadgeColumn::make('status')->label('Status')->colors([
+                    'aktivan' => 'success',
+                    'neaktivan' => 'danger',
+                    'zavrsen' => 'warning',
                 ]),
-        ])
-        ->actions([
-            Tables\Actions\EditAction::make(),
-        ])
-        ->bulkActions([
-            Tables\Actions\DeleteBulkAction::make(),
-        ])
-        // ->expandable() // omogući proširivanje reda
-        // ->expanded(function (WorkOrder $record) {
-        //     return view('filament.work-orders.partials.details', [
-        //         'workOrder' => $record,
-        //     ]);
-        // })
-        ->defaultSort('status', 'desc');
-}
+                TextColumn::make('created_at')->label('Kreirano')->since(),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'aktivan' => 'Aktivan',
+                        'zavrsen' => 'Završen',
+                        'neaktivan' => 'Neaktivan',
+                    ]),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+            ])
+            ->defaultSort('status', 'desc')
+            ->searchDebounce(500); // debounce za bolje UX
+    }
 
     public static function getRelations(): array
     {

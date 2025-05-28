@@ -3,12 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Models\Service;
+use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use App\Filament\Resources\ServiceResource\Pages;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 
 class ServiceResource extends Resource
 {
@@ -18,25 +22,35 @@ class ServiceResource extends Resource
     protected static ?string $navigationLabel = 'Reklamacije';
     protected static ?string $modelLabel = 'Reklamacija';
     protected static ?string $pluralModelLabel = 'Reklamacije';
-    // protected static ?int $navigationSort = 1;
+
     public static function getNavigationGroup(): ?string
     {
         return 'Proizvodnja';
     }
+
     public static function getNavigationSort(): ?int
     {
         return 1;
     }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('customer_name')
+                Select::make('customer_id')
                     ->label('Kupac')
+                    ->options(Customer::all()->pluck('name', 'id'))
+                    ->searchable()
+                    ->preload()
                     ->required()
-                    ->maxLength(255),
+                    ->createOptionForm([
+                        TextInput::make('name')->required()->label('Ime kupca'),
+                    ])
+                    ->createOptionUsing(function (array $data) {
+                        return Customer::create($data)->id;
+                    }),
 
-                Forms\Components\Textarea::make('description')
+                Textarea::make('description')
                     ->label('Opis reklamacije')
                     ->required()
                     ->rows(4),
@@ -47,7 +61,7 @@ class ServiceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('customer_name')
+                Tables\Columns\TextColumn::make('customer.name')
                     ->label('Kupac')
                     ->sortable()
                     ->searchable(),

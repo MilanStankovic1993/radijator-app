@@ -15,4 +15,9 @@ class OrderRequest extends Model
     {
         return $this->hasMany(OrderRequestItem::class);
     }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

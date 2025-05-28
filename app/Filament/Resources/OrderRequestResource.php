@@ -3,20 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderRequestResource\Pages;
-use App\Filament\Resources\OrderRequestResource\RelationManagers;
 use App\Models\OrderRequest;
 use App\Models\Product;
+use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Wizard;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Traits\HasResourcePermissions;
 
 class OrderRequestResource extends Resource
@@ -26,9 +24,9 @@ class OrderRequestResource extends Resource
     protected static string $resourceName = 'orderrequests';
     protected static ?string $model = OrderRequest::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';  // promenjeno
-    protected static ?string $navigationLabel = 'Porudžbina';               // dodato
-    // protected static ?int $navigationSort = 4;      
+    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
+    protected static ?string $navigationLabel = 'Porudžbina';
+
     public static function getNavigationGroup(): ?string
     {
         return 'Magacin';
@@ -38,16 +36,26 @@ class OrderRequestResource extends Resource
     {
         return 2;
     }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
             Wizard::make([
                 Wizard\Step::make('Unos narudžbe')
                     ->schema([
-                        TextInput::make('customer_name')
+                        Select::make('customer_id')
                             ->label('Kupac')
+                            ->options(Customer::all()->pluck('name', 'id')->toArray())
+                            ->searchable()
+                            ->preload()
                             ->required()
-                            ->maxLength(255),
+                            ->createOptionForm([
+                                TextInput::make('name')->required()->label('Ime kupca'),
+                                // po potrebi dodaj još polja kupca koja želiš da uneseš prilikom kreiranja
+                            ])
+                            ->createOptionUsing(function (array $data) {
+                                return Customer::create($data)->id;
+                            }),
 
                         Repeater::make('items')
                             ->label('Proizvodi')
@@ -62,7 +70,7 @@ class OrderRequestResource extends Resource
                                 TextInput::make('quantity')
                                     ->label('Količina')
                                     ->numeric()
-                                    ->minValue(1)  // Ispravljeno sa ->min(1)
+                                    ->minValue(1)
                                     ->required(),
                             ])
                             ->minItems(1)
@@ -71,10 +79,9 @@ class OrderRequestResource extends Resource
 
                 Wizard\Step::make('Provera lagera')
                     ->schema([
-                        // Ovde ide View komponenta ili Livewire komponenta
-                        // Forms\Components\View::make('filament.orders.check-stock')
+                        // Ovde možeš dodati View komponentu ili Livewire komponentu za proveru lagera
                     ]),
-            ])
+            ]),
         ]);
     }
 
@@ -82,7 +89,7 @@ class OrderRequestResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('customer_name')
+                Tables\Columns\TextColumn::make('customer.name')
                     ->label('Kupac')
                     ->searchable()
                     ->sortable(),
@@ -101,7 +108,7 @@ class OrderRequestResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(), // omogućava pregled
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

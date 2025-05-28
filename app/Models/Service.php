@@ -10,7 +10,12 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
-        'customer_name',
+        'customer_id',
         'description',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

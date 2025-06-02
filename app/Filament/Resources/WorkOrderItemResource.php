@@ -121,9 +121,9 @@ class WorkOrderItemResource extends Resource
     public static function getPages(): array
     {
         return [
+            'edit' => Pages\EditWorkOrderItem::route('/{record}/edit'),
             'index' => Pages\ListWorkOrderItems::route('/'),
             'create' => Pages\CreateWorkOrderItem::route('/create'),
-            'edit' => Pages\EditWorkOrderItem::route('/{record}/edit'),
         ];
     }
 }

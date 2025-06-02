@@ -4,6 +4,8 @@ namespace App\Filament\Resources\WorkOrderResource\Pages;
 
 use App\Filament\Resources\WorkOrderResource;
 use Filament\Actions;
+use App\Models\Product;
+use App\Models\WorkOrderItem;
 use Filament\Resources\Pages\EditRecord;
 use App\Filament\Resources\WorkOrderResource\Widgets\ProductionPhasesOverview;
 
@@ -48,28 +50,35 @@ class EditWorkOrder extends EditRecord
 
     protected function afterSave(): void
     {
-        $record = $this->record;
+        // $workOrder = $this->record;
 
-        $existingItems = $record->items()->get();
-        $existingCount = $existingItems->count();
-        $newCount = $record->quantity;
+        // // Učitaj produkt sa radnim fazama
+        // $product = Product::with('workPhases')->find($workOrder->product_id);
+        // // print_r($product);
+        // // die();
 
-        if ($newCount > $existingCount) {
-            for ($i = $existingCount; $i < $newCount; $i++) {
-                \App\Models\WorkOrderItem::create([
-                    'work_order_id' => $record->id,
-                    'name' => 'Stavka ' . ($i + 1),
-                ]);
-            }
-        } elseif ($newCount < $existingCount) {
-            $record->items()->delete();
+        // // Ako se promenila količina, možeš obrisati i ponovo napraviti stavke, ili ažurirati postojeće
+        // // Ovde ćemo primer sa brisanjem i ponovnim dodavanjem:
+        // WorkOrderItem::where('work_order_id', $workOrder->id)->delete();
 
-            for ($i = 0; $i < $newCount; $i++) {
-                \App\Models\WorkOrderItem::create([
-                    'work_order_id' => $record->id,
-                    'name' => 'Stavka ' . ($i + 1),
-                ]);
-            }
-        }
+        // $items = [];
+        // $counter = 1;
+
+        // for ($i = 0; $i < $workOrder->quantity; $i++) {
+        //     foreach ($product->workPhases as $workPhase) {
+        //         $items[] = [
+        //             'work_order_id' => $workOrder->id,
+        //             'code' => 'Stavka ' . $counter++,
+        //             'work_phase_id' => $workPhase->id,
+        //             'status' => 'pending',
+        //             'product_id' => $product->id,
+        //             'is_confirmed' => false,
+        //         ];
+        //     }
+        // }
+
+        // foreach ($items as $itemData) {
+        //     WorkOrderItem::create($itemData);
+        // }
     }
 }

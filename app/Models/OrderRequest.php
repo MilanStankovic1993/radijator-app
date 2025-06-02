@@ -9,7 +9,7 @@ use App\Traits\HasCommonFeatures;
 class OrderRequest extends Model
 {
     use HasCommonFeatures;
-    protected $fillable = ['customer_name', 'status'];
+    protected $fillable = ['customer_id', 'customer_name', 'status'];
 
     public function items(): HasMany
     {

@@ -10,53 +10,20 @@ class WorkPhaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $product1 = Product::where('code', 'MK-001')->first();
-        $product2 = Product::where('code', 'DK-002')->first();
+        $phases = [
+            // Grdica
+            ['name' => 'Sečenje cevi', 'location' => 'Grdica', 'description' => 'Priprema i sečenje cevi na potrebne dimenzije.'],
+            ['name' => 'Zavarivanje spojeva', 'location' => 'Grdica', 'description' => 'Spajanje delova zavarivanjem.'],
+            ['name' => 'Brušenje', 'location' => 'Grdica', 'description' => 'Brušenje i priprema površina.'],
 
-        if ($product1) {
-            WorkPhase::create([
-                'product_id' => $product1->id,
-                'name' => 'Sečenje metala',
-                'description' => 'Precizno sečenje metalnih komponenti.',
-                'is_completed' => false,
-            ]);
+            // Seovac
+            ['name' => 'Farbanje', 'location' => 'Seovac', 'description' => 'Nanošenje zaštitnog sloja boje.'],
+            ['name' => 'Pakovanje', 'location' => 'Seovac', 'description' => 'Pakovanje gotovih proizvoda u ambalažu.'],
+            ['name' => 'Kontrola kvaliteta', 'location' => 'Seovac', 'description' => 'Provera dimenzija i završenosti.'],
+        ];
 
-            WorkPhase::create([
-                'product_id' => $product1->id,
-                'name' => 'Zavarivanje',
-                'description' => 'Spajanje delova u jednu celinu.',
-                'is_completed' => false,
-            ]);
-
-            WorkPhase::create([
-                'product_id' => $product1->id,
-                'name' => 'Brušenje',
-                'description' => 'Završna obrada ivica i površine.',
-                'is_completed' => false,
-            ]);
-        }
-
-        if ($product2) {
-            WorkPhase::create([
-                'product_id' => $product2->id,
-                'name' => 'Sečenje drveta',
-                'description' => 'Priprema drvenih panela na potrebne dimenzije.',
-                'is_completed' => false,
-            ]);
-
-            WorkPhase::create([
-                'product_id' => $product2->id,
-                'name' => 'Sklapanje',
-                'description' => 'Sastavljanje delova u gotov proizvod.',
-                'is_completed' => false,
-            ]);
-
-            WorkPhase::create([
-                'product_id' => $product2->id,
-                'name' => 'Brušenje i lakiranje',
-                'description' => 'Finalna obrada i zaštita površine.',
-                'is_completed' => false,
-            ]);
+        foreach ($phases as $phase) {
+            WorkPhase::create($phase);
         }
     }
 }

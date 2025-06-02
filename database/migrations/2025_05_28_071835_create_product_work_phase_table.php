@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('work_phases', function (Blueprint $table) {
+        Schema::create('product_work_phase', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->nullable();
-            $table->enum('location', ['Grdica', 'Seovac']);
-            $table->text('description')->nullable();
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->foreignId('work_phase_id')->constrained()->onDelete('cascade');
+            $table->integer('pivot_order')->nullable(); // redosled faze
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('work_phases');
+        Schema::dropIfExists('product_work_phase');
     }
 };

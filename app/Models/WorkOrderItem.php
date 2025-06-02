@@ -8,14 +8,13 @@ use App\Traits\HasCommonFeatures;
 
 class WorkOrderItem extends Model
 {
-    use HasCommonFeatures;
-    use HasFactory;
-
     protected $fillable = [
         'work_order_id',
+        'work_phase_id',
+        'product_id',
         'code',
-        'name',
         'status',
+        'is_confirmed',
     ];
 
     public function workOrder()
@@ -23,13 +22,14 @@ class WorkOrderItem extends Model
         return $this->belongsTo(WorkOrder::class);
     }
 
+    public function workPhase()
+    {
+        return $this->belongsTo(WorkPhase::class);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
-    
-    public function phase()
-    {
-        return $this->belongsTo(Phase::class);
-    }
 }
+

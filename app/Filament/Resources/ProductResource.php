@@ -14,7 +14,6 @@ use Filament\Forms\Components\Tabs\Tab;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Traits\HasResourcePermissions;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 
 class ProductResource extends Resource
@@ -26,6 +25,7 @@ class ProductResource extends Resource
     // protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-cube';
     protected static ?string $navigationLabel = 'Gotovi proizvodi';
+
     public static function getNavigationGroup(): ?string
     {
         return 'Proizvodnja';
@@ -70,26 +70,16 @@ class ProductResource extends Resource
                                     ->label('Aktivan')
                                     ->default(true),
                             ]),
-
-                        Tab::make('Radne faze u proizvodji')
+                        Tab::make('Radne faze u proizvodnji')
                             ->schema([
-                                Repeater::make('workPhases')
+                                Forms\Components\Select::make('workPhases') // Ime mora da bude isto kao relacija u Product modelu
                                     ->label('Radne faze')
-                                    ->relationship('workPhases')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('name')
-                                            ->label('Naziv faze')
-                                            ->required(),
-                                        Forms\Components\Textarea::make('description')
-                                            ->label('Opis')
-                                            ->rows(2),
-                                    ])
-                                    ->columns(2)
-                                    ->orderable()
-                                    ->defaultItems(0)
-                                    ->addActionLabel('Dodaj fazu'),
+                                    ->multiple()        // omogućava multiselect
+                                    ->relationship('workPhases', 'name') // veza i naziv za prikaz
+                                    ->required()
+                                    ->searchable()
+                                    ->preload(),
                             ]),
-
                         Tab::make('Import Sastavnice')
                             ->schema([
                                 Forms\Components\FileUpload::make('import_file')
@@ -97,11 +87,11 @@ class ProductResource extends Resource
                                     ->directory('uploads') // folder u storage/app/public/uploads
                                     ->rules([
                                         'file',
-                                        'mimes:csv,xlsx,xls,json,xml,txt', // ovde mora biti xlsx da bi prihvatio Excel fajlove
+                                        'mimes:csv,xlsx,xls,json,xml,txt', // prihvata Excel fajlove i ostale
                                     ])
                                     ->visibility('public')
                                     ->preserveFilenames()  // da ne menja ime fajla
-                                    ->disk('public')  // Obavezno ako koristiš Storage disk 'public'
+                                    ->disk('public')  // ako koristiš Storage disk 'public'
                                     ->maxSize(5120)
                                     ->required(false)
                             ]),
@@ -116,17 +106,6 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('name')->label('Naziv')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('code')->label('Šifra')->sortable(),
                 Tables\Columns\TextColumn::make('price')->label('Cena')->sortable(),
-                // Tables\Columns\TextColumn::make('import_file')
-                // ->label('Sastavnica')
-                // ->formatStateUsing(function ($state) {
-                //     if ($state) {
-                //         $url = asset('storage/' . $state);
-                //         return "<a href=\"{$url}\" target=\"_blank\" class=\"text-primary-600 hover:underline\">Prikaži fajl</a>";
-                //     } else {
-                //         return '-';
-                //     }
-                // })
-                // ->html(), // dozvoljava HTML u koloni
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktivan')
                     ->boolean(),
@@ -147,7 +126,7 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // I dalje može ostati za prikaz u posebnom tabu ako želiš u budućnosti
+            // Možeš dodati relacije ako je potrebno
         ];
     }
 

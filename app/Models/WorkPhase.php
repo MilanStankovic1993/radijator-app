@@ -8,11 +8,17 @@ use App\Traits\HasCommonFeatures;
 class WorkPhase extends Model
 {
     use HasCommonFeatures;
-    protected $fillable = ['name', 'description', 'product_id', 'is_completed'];
 
-    public function product()
+    protected $fillable = ['name', 'location', 'description'];
+
+    public function products()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsToMany(Product::class, 'product_work_phase')
+                    ->withTimestamps();
     }
-    
+
+    public function workOrderItems()
+    {
+        return $this->hasMany(WorkOrderItem::class);
+    }
 }

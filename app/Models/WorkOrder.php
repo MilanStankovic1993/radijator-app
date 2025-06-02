@@ -27,6 +27,19 @@ class WorkOrder extends Model
         return $this->belongsTo(OrderRequest::class);
     }
 
+    public function confirmedItemsPercentage(): float
+    {
+        $total = $this->items()->count();
+
+        if ($total === 0) {
+            return 0;
+        }
+
+        $confirmed = $this->items()->where('is_confirmed', 1)->count();
+
+        return round(($confirmed / $total) * 100, 2);
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class);
@@ -39,8 +52,9 @@ class WorkOrder extends Model
 
     public function items()
     {
-        return $this->hasMany(WorkOrderItem::class);
+        return $this->hasMany(\App\Models\WorkOrderItem::class, 'work_order_id');
     }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->with('items');

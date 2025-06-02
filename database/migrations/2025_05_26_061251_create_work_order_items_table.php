@@ -11,7 +11,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('work_order_id')->constrained()->onDelete('cascade');
             $table->string('code')->nullable(); // šifra proizvoda, ako postoji
-            $table->string('name');
+            $table->unsignedBigInteger('work_phase_id')->nullable();
+            $table->unsignedBigInteger('product_id')->nullable();
+            $table->boolean('is_confirmed')->default(false);
             $table->string('status')->default('pending');
             $table->timestamps();
         });

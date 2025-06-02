@@ -67,7 +67,6 @@ class WorkOrderResource extends Resource
                                     // Kada se količina menja, resetuj artikle
                                     $set('items', []);
                                 }),
-
                             Select::make('status')
                                 ->label('Status')
                                 ->options([
@@ -78,58 +77,20 @@ class WorkOrderResource extends Resource
                                 ->default('aktivan')
                                 ->required(),
                         ]),
-
-                    Tabs\Tab::make('Artikli')
-                        ->schema([
-                            HasManyRepeater::make('items')
-                                ->relationship() // automatski povezuje prema 'items' relaciji u modelu
-                                ->schema([
-                                    TextInput::make('code')
-                                        ->label('Kod artikla')
-                                        ->required(),
-
-                                    TextInput::make('name')
-                                        ->label('Naziv artikla')
-                                        ->required(),
-
-                                    Select::make('status')
-                                        ->label('Status')
-                                        ->options([
-                                            'pending' => 'Na čekanju',
-                                            'in_progress' => 'U toku',
-                                            'done' => 'Završeno',
-                                        ])
-                                        ->default('pending')
-                                        ->required(),
-                                ])
-                                ->columns(3)
-                                ->createItemButtonLabel('Dodaj artikal')
-                                ->afterStateHydrated(function ($state, callable $set, $get) {
-                                    $quantity = $get('quantity') ?? 0;
-                                    $items = $state ?? [];
-
-                                    if (count($items) < $quantity) {
-                                        for ($i = count($items); $i < $quantity; $i++) {
-                                            $items[] = ['code' => '', 'name' => '', 'status' => 'pending'];
-                                        }
-                                        $set('items', $items);
-                                    }
-                                })
-                                ->afterStateUpdated(function ($state, callable $set, $get) {
-                                    $quantity = $get('quantity') ?? 0;
-                                    $items = $state ?? [];
-
-                                    if (count($items) < $quantity) {
-                                        for ($i = count($items); $i < $quantity; $i++) {
-                                            $items[] = ['code' => '', 'name' => '', 'status' => 'pending'];
-                                        }
-                                        $set('items', $items);
-                                    } elseif (count($items) > $quantity) {
-                                        $items = array_slice($items, 0, $quantity);
-                                        $set('items', $items);
-                                    }
-                                }),
-                        ]),
+                        // Tabs\Tab::make('Proizvodnja')
+                    //     ->schema([
+                    //         HasManyRepeater::make('items')
+                    //             ->relationship('items')
+                    //             ->schema([
+                    //                 TextInput::make('code')->label('Šifra'),
+                    //                 Select::make('work_phase_id')
+                    //                     ->relationship('workPhase', 'name')
+                    //                     ->label('Faza'),
+                    //                 Forms\Components\Toggle::make('is_confirmed')->label('Potvrđeno'),
+                    //             ])
+                    //             ->columns(3)
+                    //             ->createItemButtonLabel('Dodaj proizvodnju'),
+                    //     ]),
                 ]),
         ]);
     }
@@ -142,6 +103,12 @@ class WorkOrderResource extends Resource
                 TextColumn::make('user.name')->label('Izdao')->searchable()->sortable(),
                 TextColumn::make('product.name')->label('Artikal')->searchable()->sortable(),
                 TextColumn::make('launch_date')->label('Datum lansiranja')->date(),
+                TextColumn::make('confirmed_items_percentage')
+                    ->label('Procenat odrađenog')
+                    ->getStateUsing(function (WorkOrder $record) {
+                        return $record->confirmedItemsPercentage() . '%';
+                    })
+                    ->sortable(),
                 BadgeColumn::make('status')->label('Status')->colors([
                     'aktivan' => 'success',
                     'neaktivan' => 'danger',
@@ -159,8 +126,8 @@ class WorkOrderResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
@@ -180,9 +147,9 @@ class WorkOrderResource extends Resource
     public static function getPages(): array
     {
         return [
+            'edit' => Pages\EditWorkOrder::route('/{record}/edit'),
             'index' => Pages\ListWorkOrders::route('/'),
             'create' => Pages\CreateWorkOrder::route('/create'),
-            'edit' => Pages\EditWorkOrder::route('/{record}/edit'),
             'view' => Pages\ViewWorkOrder::route('/{record}'),
         ];
     }

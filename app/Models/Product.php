@@ -12,7 +12,9 @@ class Product extends Model
 
     public function workPhases()
     {
-        return $this->hasMany(WorkPhase::class);
+        return $this->belongsToMany(WorkPhase::class)
+                    ->withPivot('pivot_order')  // samo ako ti treba order iz pivot
+                    ->withTimestamps();
     }
 
     public function workOrders()

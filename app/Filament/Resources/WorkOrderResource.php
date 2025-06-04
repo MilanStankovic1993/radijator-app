@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\WorkOrderResource\Pages;
 use App\Filament\Resources\WorkOrderResource\RelationManagers\WorkOrderItemsRelationManager;
 use App\Models\WorkOrder;
+use App\Filament\Resources\WorkOrderResource\Widgets\WorkOrdersAreaChart;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -151,6 +152,13 @@ class WorkOrderResource extends Resource
             'index' => Pages\ListWorkOrders::route('/'),
             'create' => Pages\CreateWorkOrder::route('/create'),
             'view' => Pages\ViewWorkOrder::route('/{record}'),
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            WorkOrdersAreaChart::class,
         ];
     }
 }

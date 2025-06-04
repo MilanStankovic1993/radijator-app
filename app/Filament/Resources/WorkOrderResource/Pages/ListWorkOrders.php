@@ -5,6 +5,7 @@ namespace App\Filament\Resources\WorkOrderResource\Pages;
 use App\Filament\Resources\WorkOrderResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\WorkOrderResource\Widgets\WorkOrdersAreaChart;
 
 class ListWorkOrders extends ListRecords
 {
@@ -14,6 +15,13 @@ class ListWorkOrders extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+        ];
+    }
+
+    public function getHeaderWidgets(): array
+    {
+        return [
+            WorkOrdersAreaChart::class,
         ];
     }
 }

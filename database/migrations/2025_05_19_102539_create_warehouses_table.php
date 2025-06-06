@@ -14,8 +14,21 @@ return new class extends Migration
         Schema::create('warehouses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->integer('quantity')->default(0);
+            $table->string('location', 100)->default('Glavno skladište');
+            $table->unsignedInteger('quantity')->default(0);
+            $table->decimal('reserved_quantity', 10, 2)->default(0)->comment('Rezervisana količina');
+            $table->decimal('minimum_stock', 10, 2)->default(0)->comment('Minimalna zaliha');
+            
+            // Foreign key constraints
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            
             $table->timestamps();
+            
+            // Indexes
+            $table->index('product_id');
+            $table->index('location');
+            $table->unique(['product_id', 'location']); // Jedan proizvod po lokaciji
         });
     }
 

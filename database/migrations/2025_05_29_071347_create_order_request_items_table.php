@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('order_request_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->integer('quantity');
+            $table->unsignedBigInteger('created_by')->nullable(); // korisnik koji je kreirao
+            $table->unsignedBigInteger('updated_by')->nullable(); // korisnik koji je izmenio
             $table->timestamps();
         });
     }

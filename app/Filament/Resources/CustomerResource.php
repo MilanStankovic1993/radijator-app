@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Models\Customer;
 use Filament\Forms;
@@ -83,10 +85,20 @@ class CustomerResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Ime / Naziv')->searchable()->sortable(),
-                TextColumn::make('type')->label('Tip')->sortable()->badge(),
-                TextColumn::make('phone')->label('Telefon'),
-                TextColumn::make('email')->label('Email'),
+                TextColumn::make('name')->label('Ime / Naziv')->searchable()
+                ->sortable()
+                ->toggleable(),
+                TextColumn::make('type')->label('Tip')->searchable()
+                ->sortable()
+                ->toggleable()
+                ->badge(),
+                TextColumn::make('phone')->label('Telefon')->searchable()
+                ->sortable()
+                ->toggleable(),
+                TextColumn::make('email')->label('Email')->searchable()
+                ->sortable()
+                ->toggleable(),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
                 SelectFilter::make('type')

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\OrderRequestResource\Pages;
 use App\Models\OrderRequest;
 use App\Models\Product;
@@ -92,17 +94,20 @@ class OrderRequestResource extends Resource
                 Tables\Columns\TextColumn::make('customer.name')
                     ->label('Kupac')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('items_count')
                     ->label('Broj proizvoda')
                     ->counts('items')
+                    ->toggleable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Datum')
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
                 //

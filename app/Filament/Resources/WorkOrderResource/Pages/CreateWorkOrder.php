@@ -31,36 +31,21 @@ class CreateWorkOrder extends CreateRecord
 
     protected function afterCreate(): void
     {
-        
-            $workOrder = $this->record; // Novo kreirani radni nalog
+        $workOrder = $this->record;
 
-            // Učitaj produkt sa radnim fazama
-            $product = Product::with('workPhases')->find($workOrder->product_id);
-            
-                $test = [];
-                $counter = 1; // Za brojanje stavki
+        // Učitaj produkt sa radnim fazama
+        $product = Product::with('workPhases')->find($workOrder->product_id);
 
-                for ($i = 0; $i < $workOrder->quantity; $i++) {
-                    foreach ($product->workPhases as $workPhase) {
-                        $test[] = [
-                            'work_order_id' => $workOrder->id,
-                            'code' => 'Stavka ' . $counter++,
-                            'work_phase_id' => $workPhase->id,
-                            'status' => 'pending',
-                            'product_id' => $product->id,
-                            'is_confirmed' => false,
-                        ];
-                    }
-                }
-                // dd($test);
-
-                // Ako želiš da odmah snimiš sve stavke u bazu:
-                foreach ($test as $itemData) {
-                    WorkOrderItem::create($itemData);
-                }
-
-                // ILI ako samo želiš da vidiš rezultat:
-                // dd($test);
-            }
-
+        foreach ($product->workPhases as $index => $workPhase) {
+            WorkOrderItem::create([
+                'work_order_id' => $workOrder->id,
+                'work_phase_id' => $workPhase->id,
+                'product_id' => $product->id,
+                //'code' => 'Faza ' . ($index + 1),
+                'status' => 'pending',
+                'is_confirmed' => false,
+                'required_to_complete' => $workOrder->quantity,
+            ]);
+        }
+    }
 }

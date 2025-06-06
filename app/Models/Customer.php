@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasUserTracking;
 
 class Customer extends Model
 {
+    use HasUserTracking;
+
     use HasFactory;
 
     // Polja koja mogu masovno da se popunjavaju (mass assignment)
@@ -26,6 +29,8 @@ class Customer extends Model
         'company_name',
         'pib',
         'contact_person',
+        'created_by',
+        'updated_by',
     ];
 
     // Date casting (ako želiš da 'date_of_birth' bude Carbon objekat)

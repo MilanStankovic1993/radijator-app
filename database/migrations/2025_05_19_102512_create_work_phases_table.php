@@ -13,10 +13,20 @@ return new class extends Migration
     {
         Schema::create('work_phases', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->nullable();
+            $table->string('name', 255)->nullable();
             $table->enum('location', ['Grdica', 'Seovac']);
+            $table->decimal('time_norm', 8, 2)->comment('Vremenska norma u minutima');
+            $table->unsignedTinyInteger('number_of_workers')->default(1)->comment('Potreban broj radnika');
             $table->text('description')->nullable();
+            
+            // Foreign key constraints
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
+            
             $table->timestamps();
+            
+            // Index za bolje performanse
+            $table->index('location');
         });
     }
 

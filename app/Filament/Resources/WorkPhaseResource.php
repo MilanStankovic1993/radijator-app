@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
 use App\Filament\Resources\WorkPhaseResource\Pages;
 use App\Models\WorkPhase;
 use Filament\Forms;
@@ -14,6 +15,10 @@ use Filament\Forms\Components\Select;
 
 class WorkPhaseResource extends Resource
 {
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
     protected static ?string $model = WorkPhase::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-8-tooth';
@@ -29,6 +34,12 @@ class WorkPhaseResource extends Resource
         return 1;
     }
 
+    /**
+     * Defines the form schema of the resource.
+     *
+     * @param  \Filament\Forms\Form  $form
+     * @return \Filament\Forms\Form
+     */
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -44,12 +55,37 @@ class WorkPhaseResource extends Resource
                 ])
                 ->label('Lokacija'),
 
+            TextInput::make('time_norm')
+                ->label('Vremenska norma (min)')
+                ->numeric()
+                ->minValue(1)
+                ->suffix('min')
+                ->required(),
+
             Forms\Components\Textarea::make('description')
                 ->label('Opis')
                 ->rows(4),
+
+            TextInput::make('number_of_workers')
+                ->label('Broj radnika')
+                ->numeric()
+                ->minValue(1)
+                ->required(),
         ]);
     }
 
+    /**
+     * Configures the table for the WorkPhaseResource.
+     *
+     * Defines the columns, filters, actions, and bulk actions
+     * for the table display. It includes columns for the work
+     * phase name, location, time norm, and description, along
+     * with user tracking columns. Filters allow selecting by
+     * location, and actions include editing and bulk deleting.
+     *
+     * @param  \Filament\Tables\Table  $table
+     * @return \Filament\Tables\Table
+     */
     public static function table(Table $table): Table
     {
         return $table
@@ -57,15 +93,28 @@ class WorkPhaseResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Naziv')
                     ->searchable()
-                    ->sortable(),
-
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('location')
                     ->label('Lokacija')
-                    ->sortable(),
-
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('time_norm')
+                    ->label('Vremenska norma')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable()
+                    ->suffix(' min'),
                 Tables\Columns\TextColumn::make('description')
                     ->label('Opis')
                     ->limit(50),
+                Tables\Columns\TextColumn::make('number_of_workers')
+                    ->label('Broj radnika')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('location')

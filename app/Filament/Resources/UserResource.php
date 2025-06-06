@@ -112,11 +112,12 @@ class UserResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('roles')
                     ->label('Uloge')
-                    ->formatStateUsing(fn ($state, $record) => $record->roles->pluck('name')->join(', ') ?: '-'),
-                    // ->sortable(),
+                    ->formatStateUsing(fn ($state, $record) => $record->roles->pluck('name')->join(', ') ?: '-')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Kreiran')
                     ->dateTime()

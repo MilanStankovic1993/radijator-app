@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->foreignId('work_phase_id')->constrained()->onDelete('cascade');
             $table->integer('pivot_order')->nullable(); // redosled faze
+            $table->unsignedBigInteger('created_by')->nullable(); // korisnik koji je kreirao
+            $table->unsignedBigInteger('updated_by')->nullable(); // korisnik koji je izmenio
             $table->timestamps();
         });
     }

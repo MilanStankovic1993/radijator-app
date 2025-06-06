@@ -20,6 +20,7 @@ class EditProduct extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+                    // SaveAction::make(),
             Actions\Action::make('back')
                 ->label('Nazad')
                 ->url(fn () => ProductResource::getUrl('index'))

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\ProductionTrackingResource\Pages;
 use App\Filament\Resources\ProductionTrackingResource\RelationManagers;
 use App\Models\ProductionTracking;
@@ -43,7 +45,10 @@ class ProductionTrackingResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Artikal'),
+                TextColumn::make('name')->label('Artikal')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
 
                 IconColumn::make('has_work_order')
                     ->label('Radni nalog')
@@ -54,16 +59,17 @@ class ProductionTrackingResource extends Resource
                     ->trueColor('success')
                     ->falseColor('danger'),
 
-                ProgressColumn::make('completion_percent')
-                    ->label('Završenost faza')
-                    ->getStateUsing(function ($record) {
-                        $total = $record->workPhases()->count();
-                        if ($total === 0) {
-                            return 0;
-                        }
-                        $completed = $record->workPhases()->where('is_completed', true)->count();
-                        return intval(($completed / $total) * 100);
-                    }),
+                // ProgressColumn::make('completion_percent')
+                //     ->label('Završenost faza')
+                //     ->getStateUsing(function ($record) {
+                //         $total = $record->workPhases()->count();
+                //         if ($total === 0) {
+                //             return 0;
+                //         }
+                //         $completed = $record->workPhases()->where('is_completed', true)->count();
+                //         return intval(($completed / $total) * 100);
+                //     }),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
                 //

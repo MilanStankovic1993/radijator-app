@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Service;
 use App\Models\Customer;
 use Filament\Forms;
@@ -64,16 +66,16 @@ class ServiceResource extends Resource
                 Tables\Columns\TextColumn::make('customer.name')
                     ->label('Kupac')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('description')
                     ->label('Opis')
-                    ->limit(50),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Datum')
-                    ->dateTime('d.m.Y H:i')
-                    ->sortable(),
+                    ->limit(50)
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([])
             ->actions([

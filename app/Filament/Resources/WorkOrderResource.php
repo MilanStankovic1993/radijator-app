@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\WorkOrderResource\Pages;
 use App\Filament\Resources\WorkOrderResource\RelationManagers\WorkOrderItemsRelationManager;
 use App\Models\WorkOrder;
@@ -18,6 +20,8 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\HasManyRepeater;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\CreateRecord;
 
 class WorkOrderResource extends Resource
 {
@@ -34,87 +38,112 @@ class WorkOrderResource extends Resource
     {
         return 1;
     }
-    public static function form(Form $form): Form
+
+    public static function form(Form $form, $record = null): Form
     {
-        return $form->schema([
-            Tabs::make('Radni nalog')
-                ->tabs([
-                    Tabs\Tab::make('Osnovno')
-                        ->schema([
-                            TextInput::make('work_order_number')
-                                ->label('Broj radnog naloga')
-                                ->required(),
+    $operation = $form->getOperation();
+    if ($operation === 'create') {
+            // forma za create radnog naloga
+            return $form->schema([
+                Tabs::make('Radni nalog')
+                    ->tabs([
+                        Tabs\Tab::make('Osnovno')
+                            ->schema([
+                                TextInput::make('product_code')
+                                    ->label('Šifra artikla')
+                                    ->regex('/^[0-9a-zA-Z]+$/') // omogućava unos kombinacije slova i brojeva
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, $set, $get) => $set('full_name', $get('work_order_number') . '-' . $get('product_code') . '-' . $get('series') . '-' . $get('quantity'))),
 
-                            Hidden::make('user_id')
-                                ->default(fn () => auth()->id()), // koristi callback da se uzme ID trenutno prijavljenog korisnika
+                                Select::make('work_order_number')
+                                    ->label('Broj radnog naloga')
+                                    ->options([
+                                        '021' => 'naručeno',
+                                        '020' => 'zalihe',
+                                        '022' => 'naručeno i dopunjeno  za zalihe',
+                                        '001' => 'prototip kotla/prizvoda',
+                                        '002' => 'rekonstrukcija kotla/prizvoda',
+                                        '003' => 'remont kotla/prizvoda',
+                                        '090' => 'tehnološka proba',
+                                        '100' => 'magacinske rezerve',
+                                        '110' => 'usluga od našeg materijala',
+                                        '111' => 'usluga od  materijalanaručioca',
+                                        '112' => 'usluga od našeg materijala i materijala kupca',
+                                        '201' => 'pomoćni pribor , alat, naprava za proizvodnju',
+                                        '202' => 'održavanje,remont opreme, dodatna oprema...',
+                                        '030' => 'rezervni delovi',
+                                        '050' => 'Dopunski nalog (nedostajuće pozicije-zahtev Šeovac; Škart po RN',
+                                    ])
+                                    ->required()
+                                    ->live()
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, $set, $get) => $set('full_name', $get('work_order_number') . '.' . $get('product_code') . '.' . $get('series') . '.' . $get('quantity'))),
 
-                            DatePicker::make('launch_date')
-                                ->label('Datum lansiranja')
-                                ->required(),
+                                TextInput::make('series')
+                                    ->label('Serija')
+                                    ->integer() 
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, $set, $get) => $set('full_name', $get('work_order_number') . '.' . $get('product_code') . '.' . $get('series') . '-' . $get('quantity'))),
 
-                            Select::make('product_id')
-                                ->label('Artikal')
-                                ->relationship('product', 'name')
-                                ->preload()
-                                ->required(),
+                                TextInput::make('quantity')
+                                    ->label('Količina')
+                                    ->integer() 
+                                    ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(fn ($state, $set, $get) => $set('full_name', $get('work_order_number') . '.' . $get('product_code') . '.' . $get('series') . '-' . $get('quantity'))),
+                                Hidden::make('user_id')
+                                    ->default(fn () => auth()->id()),
 
-                            TextInput::make('quantity')
-                                ->label('Količina')
-                                ->numeric()
-                                ->required()
-                                ->reactive() // omogućava instant promenu vrednosti i aktivira callback
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    // Kada se količina menja, resetuj artikle
-                                    $set('items', []);
-                                }),
-                            Select::make('status')
-                                ->label('Status')
-                                ->options([
-                                    'aktivan' => 'Aktivan',
-                                    'zavrsen' => 'Završen',
-                                    'neaktivan' => 'Neaktivan',
-                                ])
-                                ->default('aktivan')
-                                ->required(),
-                        ]),
-                        // Tabs\Tab::make('Proizvodnja')
-                    //     ->schema([
-                    //         HasManyRepeater::make('items')
-                    //             ->relationship('items')
-                    //             ->schema([
-                    //                 TextInput::make('code')->label('Šifra'),
-                    //                 Select::make('work_phase_id')
-                    //                     ->relationship('workPhase', 'name')
-                    //                     ->label('Faza'),
-                    //                 Forms\Components\Toggle::make('is_confirmed')->label('Potvrđeno'),
-                    //             ])
-                    //             ->columns(3)
-                    //             ->createItemButtonLabel('Dodaj proizvodnju'),
-                    //     ]),
-                ]),
-        ]);
+                                DatePicker::make('launch_date')
+                                    ->label('Datum lansiranja')
+                                    ->required(),
+
+                                Select::make('product_id')
+                                    ->label('Artikal')
+                                    ->relationship('product', 'name')
+                                    ->preload()
+                                    ->required(),
+                                Select::make('status')
+                                    ->label('Status')
+                                    ->options([
+                                        'aktivan' => 'Aktivan',
+                                        'zavrsen' => 'Završen',
+                                        'neaktivan' => 'Neaktivan',
+                                    ])
+                                    ->default('aktivan')
+                                    ->disabled(),
+                            ]),
+                    ]),
+            ]);
+        } else {
+            return $form
+            ->schema([
+            ]);
+        }
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('work_order_number')->label('Broj')->searchable()->sortable(),
-                TextColumn::make('user.name')->label('Izdao')->searchable()->sortable(),
-                TextColumn::make('product.name')->label('Artikal')->searchable()->sortable(),
-                TextColumn::make('launch_date')->label('Datum lansiranja')->date(),
+                TextColumn::make('full_name')->label('Radni nalog')->searchable()->sortable()->toggleable(),
+                TextColumn::make('user.name')->label('Izdao')->searchable()->sortable()->toggleable(),
+                TextColumn::make('product.name')->label('Artikal')->searchable()->sortable()->toggleable(),
+                TextColumn::make('launch_date')->label('Datum lansiranja')->date()->sortable(),
                 TextColumn::make('confirmed_items_percentage')
                     ->label('Procenat odrađenog')
                     ->getStateUsing(function (WorkOrder $record) {
                         return $record->confirmedItemsPercentage() . '%';
                     })
-                    ->sortable(),
+                    ->sortable()->toggleable(),
                 BadgeColumn::make('status')->label('Status')->colors([
                     'aktivan' => 'success',
                     'neaktivan' => 'danger',
                     'zavrsen' => 'warning',
                 ]),
-                TextColumn::make('created_at')->label('Kreirano')->since(),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -134,8 +163,11 @@ class WorkOrderResource extends Resource
                 Tables\Actions\DeleteBulkAction::make(),
             ])
             ->defaultSort('status', 'desc')
-            ->searchDebounce(500); // debounce za bolje UX
+            ->searchDebounce(500)
+            ->recordUrl(fn (WorkOrder $record) => static::getUrl('edit', ['record' => $record]))
+            ->recordAction(null); // spriječava otvaranje modala i koristi URL
     }
+
 
     public static function getRelations(): array
     {

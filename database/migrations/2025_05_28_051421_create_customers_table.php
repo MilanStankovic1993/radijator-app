@@ -31,6 +31,8 @@ return new class extends Migration
             $table->string('pib')->nullable();
             $table->string('contact_person')->nullable();
 
+            $table->unsignedBigInteger('created_by')->nullable(); // korisnik koji je kreirao
+            $table->unsignedBigInteger('updated_by')->nullable(); // korisnik koji je izmenio
             $table->timestamps();
         });
     }

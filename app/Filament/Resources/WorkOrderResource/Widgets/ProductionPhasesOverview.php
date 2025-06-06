@@ -10,9 +10,8 @@ class ProductionPhasesOverview extends Widget
 {
     protected static string $view = 'filament.resources.work-order-resource.widgets.production-phases-overview';
 
-    public ?int $recordId = null; // nullable, da Livewire ne puca
+    public ?int $recordId = null;
 
-    // Mount sa nullable parametrom i default null
     public function mount(?int $recordId = null): void
     {
         $this->recordId = $recordId;
@@ -24,7 +23,8 @@ class ProductionPhasesOverview extends Widget
             return [];
         }
 
-        $workOrder = WorkOrder::with('items.product', 'items.phase')->find($this->recordId);
+        // Ovde koristimo workPhase relaciju kao i u RelationManager-u
+        $workOrder = WorkOrder::with('items.product', 'items.workPhase')->find($this->recordId);
 
         if (!$workOrder) {
             return [];
@@ -34,10 +34,10 @@ class ProductionPhasesOverview extends Widget
             return [
                 'work_order' => $workOrder->work_order_number,
                 'product' => $item->product->name ?? 'Nepoznato',
-                'phase' => $item->phase->name ?? 'Nepoznato',
+                'phase' => $item->workPhase->name ?? 'Nepoznato',
                 'is_completed' => $item->status === 'done' ? '✅' : '❌',
                 'product_id' => $item->product_id,
-                'phase_id' => $item->phase_id,
+                'phase_id' => $item->work_phase_id ?? $item->workPhase->id ?? null, // ako ti treba
             ];
         })->toArray();
 

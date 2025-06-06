@@ -15,6 +15,8 @@ class CreateActivityLogTable extends Migration
             $table->nullableMorphs('subject', 'subject');
             $table->nullableMorphs('causer', 'causer');
             $table->json('properties')->nullable();
+            $table->unsignedBigInteger('created_by')->nullable(); // korisnik koji je kreirao
+            $table->unsignedBigInteger('updated_by')->nullable(); // korisnik koji je izmenio
             $table->timestamps();
             $table->index('log_name');
         });

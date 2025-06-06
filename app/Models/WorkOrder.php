@@ -7,21 +7,34 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\HasCommonFeatures;
+use App\Traits\HasUserTracking;
 
 class WorkOrder extends Model
 {
+    use HasUserTracking;
     use HasFactory;
     use HasCommonFeatures;
 
     protected $fillable = [
-        'work_order_number',
+        'full_name',
         'user_id',
-        'launch_date',
         'product_id',
-        'status',
+        'work_order_number',
+        'product_code',
+        'series',
+        'command_in_series',
+        'launch_date',
         'quantity',
+        'status',
+        'created_by',
+        'updated_by',
     ];
-
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $model->full_name = $model->work_order_number . '-' . $model->product_code . '-' . $model->series . '-' . $model->quantity;
+        });
+    }
     public function orderRequest()
     {
         return $this->belongsTo(OrderRequest::class);

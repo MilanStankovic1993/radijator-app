@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
 use Filament\Forms;
@@ -34,81 +36,78 @@ class ProductResource extends Resource
     {
         return 1;
     }
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Tabs::make('Product Tabs')
-                    ->tabs([
-                        Tab::make('Izmene Kotla')
-                            ->schema([
-                                Forms\Components\TextInput::make('name')
-                                    ->label('Naziv')
-                                    ->required()
-                                    ->maxLength(255),
-                                Forms\Components\TextInput::make('code')
-                                    ->label('Šifra')
-                                    ->required()
-                                    ->unique(ignoreRecord: true)
-                                    ->validationMessages([
-                                        'unique' => 'Artikal sa ovim kodom vec postoji.',
-                                    ])
-                                    ->maxLength(100),
-                                Forms\Components\Textarea::make('description')
-                                    ->label('Opis')
-                                    ->rows(3)
-                                    ->maxLength(1000),
-                                Forms\Components\Textarea::make('specifications')
-                                    ->label('Specifikacije')
-                                    ->rows(3)
-                                    ->maxLength(1000),
-                                Forms\Components\TextInput::make('price')
-                                    ->label('Cena')
-                                    ->numeric()
-                                    ->required(),
-                                Forms\Components\Toggle::make('is_active')
-                                    ->label('Aktivan')
-                                    ->default(true),
-                            ]),
-                        Tab::make('Radne faze u proizvodnji')
-                            ->schema([
-                                Forms\Components\Select::make('workPhases') // Ime mora da bude isto kao relacija u Product modelu
-                                    ->label('Radne faze')
-                                    ->multiple()        // omogućava multiselect
-                                    ->relationship('workPhases', 'name') // veza i naziv za prikaz
-                                    ->required()
-                                    ->searchable()
-                                    ->preload(),
-                            ]),
-                        Tab::make('Import Sastavnice')
-                            ->schema([
-                                Forms\Components\FileUpload::make('import_file')
-                                    ->label('Uvezi sastavnicu')
-                                    ->directory('uploads') // folder u storage/app/public/uploads
-                                    ->rules([
-                                        'file',
-                                        'mimes:csv,xlsx,xls,json,xml,txt', // prihvata Excel fajlove i ostale
-                                    ])
-                                    ->visibility('public')
-                                    ->preserveFilenames()  // da ne menja ime fajla
-                                    ->disk('public')  // ako koristiš Storage disk 'public'
-                                    ->maxSize(5120)
-                                    ->required(false)
-                            ]),
-                    ])
-            ]);
-    }
+public static function form(Form $form): Form
+{
+    return $form
+    
+    ->columns(1)
+    ->extraAttributes([
+        'style' => 'max-width: 1400px; margin: 0;' // ili margin-left: 0;
+    ])
+        ->schema([
+            Tabs::make('Product Tabs')
+                ->tabs([
+                    Tab::make('Izmene Kotla')
+                        ->schema([
+                            Forms\Components\TextInput::make('name')
+                                ->label('Naziv')
+                                ->required()
+                                ->maxLength(255),
+                            Forms\Components\TextInput::make('code')
+                                ->label('Šifra')
+                                ->required()
+                                ->unique(ignoreRecord: true)
+                                ->validationMessages([
+                                    'unique' => 'Artikal sa ovim kodom vec postoji.',
+                                ])
+                                ->maxLength(100),
+                            Forms\Components\Textarea::make('description')
+                                ->label('Opis')
+                                ->rows(3)
+                                ->maxLength(1000),
+                            Forms\Components\Textarea::make('specifications')
+                                ->label('Specifikacije')
+                                ->rows(3)
+                                ->maxLength(1000),
+                            Forms\Components\TextInput::make('price')
+                                ->label('Cena')
+                                ->numeric()
+                                ->required(),
+                            Forms\Components\Toggle::make('status')
+                                ->label('Aktivan')
+                                ->default(true),
+                        ]),
+                    Tab::make('Import Sastavnice')
+                        ->schema([
+                            Forms\Components\FileUpload::make('import_file')
+                                ->label('Uvezi sastavnicu')
+                                ->directory('uploads') 
+                                ->rules([
+                                    'file',
+                                    'mimes:csv,xlsx,xls,json,xml,txt',
+                                ])
+                                ->visibility('public')
+                                ->preserveFilenames()
+                                ->disk('public')
+                                ->maxSize(5120)
+                                ->required(false),
+                        ]),
+                ]),
+        ]);
+}
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Naziv')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('code')->label('Šifra')->sortable(),
-                Tables\Columns\TextColumn::make('price')->label('Cena')->sortable(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->label('Aktivan')
-                    ->boolean(),
+                Tables\Columns\TextColumn::make('name')->label('Naziv')->searchable()->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('code')->label('Šifra')->sortable()->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('price')->label('Cena')->sortable()->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('status')->label('status')->sortable()->searchable()->toggleable(),
+                // Tables\Columns\IconColumn::make('status')
+                //     ->label('Aktivan')
+                //     ->boolean(),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')->label('Aktivan'),
@@ -126,7 +125,7 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // Možeš dodati relacije ako je potrebno
+            \App\Filament\Resources\ProductResource\RelationManagers\WorkPhasesRelationManager::class,
         ];
     }
 

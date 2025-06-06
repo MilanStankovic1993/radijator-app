@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\WorkOrderItemResource\Pages;
 use App\Filament\Resources\WorkOrderItemResource\RelationManagers;
 use App\Models\WorkOrderItem;
@@ -44,43 +46,71 @@ class WorkOrderItemResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-            Forms\Components\TextInput::make('code')->disabled(),
+    return $form
+        ->schema([
+            Forms\Components\TextInput::make('code')
+                ->disabled(),
+
+            Forms\Components\Select::make('work_order_id')
+                ->label('Radni nalog')
+                ->relationship('workOrder', 'work_order_number')
+                ->required(),
+
+            Forms\Components\Select::make('product_id')
+                ->label('Proizvod')
+                ->relationship('product', 'name')
+                ->required(),
+
             Forms\Components\Select::make('work_phase_id')
                 ->label('Faza')
                 ->relationship('workPhase', 'name')
                 ->required(),
-            Forms\Components\Toggle::make('is_confirmed')
-                ->label('Odrađeno')
-                ->onColor('success')
-                ->offColor('danger'),
-            ]);
+
+            Forms\Components\TextInput::make('required_to_complete')
+                ->label('Potrebno da se odradi')
+                ->numeric()
+                ->minValue(0)
+                ->suffix('min'),
+
+            Forms\Components\TextInput::make('total_completed')
+                ->label('Ukupno odrađeno')
+                ->numeric()
+                ->minValue(0)
+                ->suffix('min'),
+
+            Forms\Components\Select::make('status')
+                ->label('Status')
+                ->options([
+                    'pending' => 'Na čekanju',
+                    'in_progress' => 'U toku',
+                    'completed' => 'Završeno',
+                ])
+                ->required(),
+        ]);
     }
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                // TextColumn::make('workOrder.work_order_number')
-                //     ->label('Radni nalog')
-                //     ->sortable()
+                // TextColumn::make('code')
+                //     ->label('Šifra')
                 //     ->searchable()
-                //     ->badge(),
-
-                TextColumn::make('code')
-                    ->label('Šifra')
-                    ->sortable()
-                    ->searchable(),
+                //     ->sortable()
+                //     ->toggleable(),
 
                 TextColumn::make('workPhase.name')
                     ->label('Faza')
+                    ->searchable()
                     ->sortable()
-                    ->searchable(),
+                    ->toggleable(),
 
                 Tables\Columns\IconColumn::make('is_confirmed')
                     ->label('Potvrđeno')
                     ->boolean()
-                    ->sortable(),
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
                 Tables\Filters\Filter::make('is_confirmed')

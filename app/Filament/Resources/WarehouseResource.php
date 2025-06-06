@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\FilamentColumns;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\WarehouseResource\Pages;
 use App\Models\Warehouse;
 use Filament\Forms;
@@ -58,12 +60,19 @@ class WarehouseResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('product.code')->label('Šifra proizvoda'),
-                Tables\Columns\TextColumn::make('product.name')->label('Naziv proizvoda'),
-                Tables\Columns\TextColumn::make('quantity')->label('Količina'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Datum unosa')
-                    ->dateTime('d.m.Y H:i'),
+                Tables\Columns\TextColumn::make('product.code')->label('Šifra proizvoda')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('product.name')->label('Naziv proizvoda')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('quantity')->label('Količina')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('product_id')

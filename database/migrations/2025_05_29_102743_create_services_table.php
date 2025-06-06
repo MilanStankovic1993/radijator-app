@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('customer_id')->constrained('customers');
             $table->text('description');
+            $table->unsignedBigInteger('created_by')->nullable(); // korisnik koji je kreirao
+            $table->unsignedBigInteger('updated_by')->nullable(); // korisnik koji je izmenio
             $table->timestamps();
         });
     }

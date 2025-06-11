@@ -10,6 +10,11 @@ use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextInputColumn;
 use App\Helpers\FilamentColumns;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use App\Exports\CustomProductExport;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use Filament\Tables\Actions\Action;
+
 
 class WorkOrderItemsRelationManager extends RelationManager
 {
@@ -54,25 +59,43 @@ class WorkOrderItemsRelationManager extends RelationManager
     }
     public function table(Tables\Table $table): Tables\Table
     {
-        return $table->columns([
-            // TextColumn::make('id')->label('ID'),
-            // TextColumn::make('work_order_id')->label('Work Order ID'),
-            TextColumn::make('workPhase.name')->label('Faza'),
-            // TextColumn::make('product_id')->label('Product ID'),
-            Tables\Columns\BooleanColumn::make('is_confirmed')->label('Potvrđeno'),
-            TextColumn::make('required_to_complete')->label('Potrebno završiti'),
-            TextColumn::make('remaining_to_complete')
-                ->label('Preostalo da se završi')
-                ->getStateUsing(fn ($record) => max(0, ($record->required_to_complete - $record->total_completed))),
-            TextInputColumn::make('total_completed')
-                ->label('Završeno')
-            ->afterStateUpdated(function ($state, $record) {
-                $record->total_completed = $state;
-                $record->is_confirmed = ($state == $record->required_to_complete);
-                $record->save();
-            }),
-            // TextColumn::make('status')->label('Status'),
-            ...FilamentColumns::userTrackingColumns(),
+        
+        return $table
+            ->columns([
+                TextColumn::make('workPhase.name')->label('Faza'),
+                Tables\Columns\BooleanColumn::make('is_confirmed')->label('Potvrđeno'),
+                TextColumn::make('required_to_complete')->label('Potrebno završiti'),
+                TextColumn::make('remaining_to_complete')
+                    ->label('Preostalo da se završi')
+                    ->getStateUsing(fn ($record) => max(0, ($record->required_to_complete - $record->total_completed))),
+                TextInputColumn::make('total_completed')
+                    ->label('Završeno')
+                    ->afterStateUpdated(function ($state, $record) {
+                        $max = $record->required_to_complete;
+
+                        if ($state > $max) {
+                            if ($state > $max) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Greška')
+                                ->body('Ne možeš uneti više od ukupnog broja: ' . $max)
+                                ->danger()
+                                ->send();
+                            }
+                            $record->total_completed = $max;
+                        } else {
+                            $record->total_completed = $state;
+                        }
+
+                        $record->is_confirmed = ($record->total_completed == $max);
+                        $record->save();
+                    }),
+                ...FilamentColumns::userTrackingColumns(),
+            ])
+        ->headerActions([
+            Action::make('custom_export')
+                ->label('Exportuj kao izveštaj')
+                ->url(fn () => route('export.work-order', ['id' => $this->getOwnerRecord()->id]))
+                ->openUrlInNewTab()
         ]);
     }
     protected function canEdit(Model $record): bool

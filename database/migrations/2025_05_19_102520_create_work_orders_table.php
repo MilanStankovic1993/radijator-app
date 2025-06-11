@@ -13,19 +13,19 @@ return new class extends Migration
         Schema::create('work_orders', function (Blueprint $table) {
             $table->id();
 
-            $table->string('full_name', 255)->unique();      // puno ime, može i nullable ako nije obavezno
+            $table->string('full_name', 255);      // puno ime, može i nullable ako nije obavezno
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
 
             // Novi dodati stupci:
             $table->string('work_order_number', 255);
-            $table->string('product_code', 255);   // oznaka proizvoda
             $table->string('series', 255);         // serija
             $table->unsignedInteger('quantity');
 
 
             $table->date('launch_date');
             $table->enum('status', ['aktivan', 'u_toku', 'zavrsen', 'otkazan'])->default('aktivan');
+            $table->enum('status_progresije', ['hitno', 'ceka se', 'aktivan'])->default('aktivan');
 
             // Foreign key constraints
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');

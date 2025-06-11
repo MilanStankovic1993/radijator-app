@@ -14,6 +14,7 @@ class EditWorkOrder extends EditRecord
     protected static string $resource = WorkOrderResource::class;
 
     protected static bool $isCreate = false;
+
     protected function getHeaderActions(): array
     {
         return [
@@ -49,36 +50,35 @@ class EditWorkOrder extends EditRecord
         return [];
     }
 
-    protected function beforeSave(): void
-    {
-        if ($this->record->isDirty('quantity')) {
-            $this->halt();
+    // protected function beforeSave(): void
+    // {
+    //     if ($this->record->isDirty('quantity')) {
+    //         $this->halt();
 
-            $this->notify('warning', 'Menjate količinu!');
+    //         $this->notify('warning', 'Menjate količinu!');
 
-            $this->dispatchBrowserEvent('confirm-quantity-change');
-        }
-    }
+    //         $this->dispatchBrowserEvent('confirm-quantity-change');
+    //     }
+    // }
 
-    protected function afterSave(): void
-    {
-        $workOrder = $this->record;
+    // protected function afterSave(): void
+    // {
+    //     $workOrder = $this->record;
 
-        // Obrisati stare stavke
-        WorkOrderItem::where('work_order_id', $workOrder->id)->delete();
+    //     // Obrisati stare stavke
+    //     WorkOrderItem::where('work_order_id', $workOrder->id)->delete();
 
-        $product = Product::with('workPhases')->find($workOrder->product_id);
+    //     $product = Product::with('workPhases')->find($workOrder->product_id);
 
-        foreach ($product->workPhases as $index => $workPhase) {
-            WorkOrderItem::create([
-                'work_order_id' => $workOrder->id,
-                'work_phase_id' => $workPhase->id,
-                'product_id' => $product->id,
-                // 'code' => 'Faza ' . ($index + 1),
-                'status' => 'pending',
-                'is_confirmed' => false,
-                'required_to_complete' => $workOrder->quantity,
-            ]);
-        }
-    }
+    //     foreach ($product->workPhases as $index => $workPhase) {
+    //         WorkOrderItem::create([
+    //             'work_order_id' => $workOrder->id,
+    //             'work_phase_id' => $workPhase->id,
+    //             'product_id' => $product->id,
+    //             'status' => 'pending',
+    //             'is_confirmed' => false,
+    //             'required_to_complete' => $workOrder->quantity,
+    //         ]);
+    //     }
+    // }
 }

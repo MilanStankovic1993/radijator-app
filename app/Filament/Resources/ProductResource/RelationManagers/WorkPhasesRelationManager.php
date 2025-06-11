@@ -36,7 +36,7 @@ class WorkPhasesRelationManager extends RelationManager
                     ->searchable(query: function ($query, $search) {$query->where('time_norm', 'like', "%{$search}%");})
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('location')->label('Lokacija')->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('time_norm')->label('Norma')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('time_norm')->label('Vremenska norma')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('number_of_workers')->label('Broj radnika')->sortable()->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('description')->label('Opis')->limit(30)->toggleable(),
             ])
@@ -48,8 +48,8 @@ class WorkPhasesRelationManager extends RelationManager
                         'Seovac' => 'Seovac',
                     ]),
                 Tables\Filters\Filter::make('time_norm_over_60')
-                    ->label('Norma veća od 60 min')
-                    ->query(fn ($query) => $query->where('time_norm', '>', 60)),
+                    ->label('Norma veća od 30 min')
+                    ->query(fn ($query) => $query->where('time_norm', '>', 30)),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),

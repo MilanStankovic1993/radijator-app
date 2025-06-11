@@ -1237,6 +1237,7 @@ class ProductWorkPhaseSeeder extends Seeder
         foreach ($productsData as $fileName => $phases) {
             $nameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
 
+            $codeFromFile = strtoupper(substr($nameWithoutExtension, 0, 8))
             $product = Product::create([
                 'name' => $nameWithoutExtension,
                 'code' => 'AUTO-' . strtoupper(substr($nameWithoutExtension, 0, 5)) . '-' . uniqid(),

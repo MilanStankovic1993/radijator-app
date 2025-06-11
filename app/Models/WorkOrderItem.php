@@ -18,10 +18,20 @@ class WorkOrderItem extends Model
         'required_to_complete',
         'total_completed',
         // 'code',
-        'status',
+        // 'status',
         'is_confirmed',
     ];
 
+    protected static function booted()
+    {
+        static::saved(function ($item) {
+            $item->workOrder?->updateStatusBasedOnItems();
+        });
+
+        static::deleted(function ($item) {
+            $item->workOrder?->updateStatusBasedOnItems();
+        });
+    }
     public function workOrder()
     {
         return $this->belongsTo(WorkOrder::class);

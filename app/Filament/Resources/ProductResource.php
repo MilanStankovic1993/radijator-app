@@ -109,6 +109,12 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('name')->label('Naziv')->searchable()->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('code')->label('Šifra')->sortable()->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('price')->label('Cena')->sortable()->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('import_file')
+                    ->label('Sastavnica')
+                    ->url(fn ($record) => $record->import_file ? asset('storage/' . $record->import_file) : null, true)
+                    ->openUrlInNewTab()
+                    ->formatStateUsing(fn ($state) => $state ? basename($state) : '-')
+                    ->toggleable(),
                 BadgeColumn::make('status')->label('Status')->colors([
                         'aktivan' => 'success',
                         'neaktivan' => 'danger',

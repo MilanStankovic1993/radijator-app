@@ -43,7 +43,7 @@ class WorkOrderResource extends Resource
         $updateFullName = function ($get, $set) {
             $set('full_name', 
                 $get('work_order_number') . '.' .
-                $get('product_code') . '.' .
+                $get('product_name') . '.' .
                 $get('series') . '-' .
                 $get('quantity')
             );
@@ -110,11 +110,11 @@ class WorkOrderResource extends Resource
                                 ->live()
                                 ->afterStateUpdated(function ($state, $set, $get) use ($updateFullName) {
                                     $product = Product::find($state);
-                                    $set('product_code', optional($product)->code);
+                                    $set('product_name', optional($product)->name);
                                     $updateFullName($get, $set);
                                 }),
 
-                            Hidden::make('product_code'),
+                            Hidden::make('product_name'),
 
                             Hidden::make('full_name'),
 

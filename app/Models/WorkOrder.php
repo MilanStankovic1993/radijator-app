@@ -16,6 +16,7 @@ class WorkOrder extends Model
         'full_name',
         'user_id',
         'product_id',
+        // 'product_name',
         'work_order_number',
         'series',
         'command_in_series',
@@ -41,9 +42,8 @@ class WorkOrder extends Model
     protected function generateFullName(): void
     {
         $product = $this->product ?? $this->load('product')->product;
-        $code = $product?->code ?? 'NO-CODE';
-
-        $this->full_name = "{$this->work_order_number}.{$this->series}.{$code}.{$this->quantity}";
+        $name = $product?->name ?? 'NO-NAME';
+        $this->full_name = "{$this->work_order_number}.{$name}.{$this->series}-{$this->quantity}";
     }
 
     // Relations

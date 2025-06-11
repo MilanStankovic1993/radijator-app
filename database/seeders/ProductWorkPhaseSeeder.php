@@ -11,6 +11,7 @@ class ProductWorkPhaseSeeder extends Seeder
 
     public function run(): void
     {
+        $uploadsPath = public_path('storage/uploads');
         $productsData = [
             'Biolux14.xlsx' => [
                 ['Pakovanje poda', 20.0, 1],
@@ -102,7 +103,7 @@ class ProductWorkPhaseSeeder extends Seeder
                 ['Test bezbednosti i funkcionalnosti', 13.0, 1],
                 ['Pakovanje i priprema kotla za transport', 30.0, 1],
             ],
-            'Biolux UNI 20+.xlsx' => [
+            'BioluxUNI20+.xlsx' => [
                 ['Pakovanje poda', 20.0, 1],
                 ['Priprema (obrada) stranica I plašta, krajcovanje', 15.0, 1],
                 ['Pakovanje I plašt (CO2)', 16.8, 1],
@@ -147,7 +148,7 @@ class ProductWorkPhaseSeeder extends Seeder
                 ['Test bezbednosti i funkcionalnosti', 13.0, 1],
                 ['Pakovanje i priprema kotla za transport', 30.0, 1],
             ],
-            'Biolux UNI 25.xlsx' => [
+            'BioluxUNI25.xlsx' => [
                 ['Pakovanje poda', 20.0, 1],
                 ['Priprema (obrada) stranica I plašta, krajcovanje', 15.0, 1],
                 ['Pakovanje I plašt (CO2)', 16.8, 1],
@@ -192,7 +193,7 @@ class ProductWorkPhaseSeeder extends Seeder
                 ['Test bezbednosti i funkcionalnosti', 13.0, 1],
                 ['Pakovanje i priprema kotla za transport', 30.0, 1],
             ],
-            'Biolux UNI 25+.xlsx' => [
+            'BioluxUNI25+.xlsx' => [
                 ['Pakovanje poda', 20.0, 1],
                 ['Priprema (obrada) stranica I plašta, krajcovanje', 15.0, 1],
                 ['Pakovanje I plašt (CO2)', 16.8, 1],
@@ -765,7 +766,7 @@ class ProductWorkPhaseSeeder extends Seeder
                 ['Farbanje delova dozera', 45, 1],
                 ['Kompletiranje dozera', 300, 1],
             ],
-            'TKAN150 Integra' => [
+            'TKAN150Integra' => [
                 ['Pakovanje, zavarivanje I obrada gornjih vrata (CO2)', 100.0, 1],
                 ['Pakovanje, zavarivanje I obrada donjih vrata (CO2)', 100.0, 1],
                 ['Pakovanje, zavarivanje I obrada zad.poklopca (CO2)', 70.0, 1],
@@ -1237,7 +1238,6 @@ class ProductWorkPhaseSeeder extends Seeder
         foreach ($productsData as $fileName => $phases) {
             $nameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
 
-            $codeFromFile = strtoupper(substr($nameWithoutExtension, 0, 8))
             $product = Product::create([
                 'name' => $nameWithoutExtension,
                 'code' => 'AUTO-' . strtoupper(substr($nameWithoutExtension, 0, 5)) . '-' . uniqid(),

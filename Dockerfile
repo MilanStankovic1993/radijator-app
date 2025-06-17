@@ -14,8 +14,13 @@ WORKDIR /var/www
 
 COPY . .
 
-RUN composer install --optimize-autoloader --no-dev
-
-RUN php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan storage:link
+# Install dependencies and run artisan setup commands
+RUN composer install --optimize-autoloader --no-dev \
+ && php artisan config:cache \
+ && php artisan route:cache \
+ && php artisan view:cache \
+ && php artisan storage:link \
+ && php artisan migrate --force \
+ && php artisan db:seed --force
 
 CMD php artisan serve --host=0.0.0.0 --port=8080

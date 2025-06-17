@@ -14,7 +14,7 @@ class UserSeeder extends Seeder
         $managerRole = Role::where('name', 'manager')->first();
         $viewerRole = Role::where('name', 'viewer')->first();
 
-        // Kreiranje i/ili ažuriranje admin korisnika i dodela role
+        // 1. Admin korisnik (default)
         $adminUser = User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
@@ -24,7 +24,7 @@ class UserSeeder extends Seeder
         );
         $adminUser->assignRole($adminRole);
 
-        // Kreiranje i/ili ažuriranje manager korisnika i dodela role
+        // 2. Manager
         $managerUser = User::updateOrCreate(
             ['email' => 'manager@example.com'],
             [
@@ -34,7 +34,7 @@ class UserSeeder extends Seeder
         );
         $managerUser->assignRole($managerRole);
 
-        // Kreiranje i/ili ažuriranje viewer korisnika i dodela role
+        // 3. Viewer
         $viewerUser = User::updateOrCreate(
             ['email' => 'viewer@example.com'],
             [
@@ -43,5 +43,25 @@ class UserSeeder extends Seeder
             ]
         );
         $viewerUser->assignRole($viewerRole);
+
+        // 4. Milan (admin)
+        $milan = User::updateOrCreate(
+            ['email' => 'milan.stankovic@radijator.rs'],
+            [
+                'name' => 'Milan',
+                'password' => bcrypt('28januar'),
+            ]
+        );
+        $milan->assignRole($adminRole);
+
+        // 5. Mihajlo (admin)
+        $mihajlo = User::updateOrCreate(
+            ['email' => 'mihajlo.ilic@radijator.rs'],
+            [
+                'name' => 'Mihajlo',
+                'password' => bcrypt('mihajlo123'),
+            ]
+        );
+        $mihajlo->assignRole($adminRole);
     }
 }

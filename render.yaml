@@ -4,9 +4,10 @@ services:
     env: docker
     plan: free
     branch: main
-    buildCommand: ""
-    startCommand: "php artisan serve --host=0.0.0.0 --port=8080"
-    healthCheckPath: /
+    buildFilter:
+      paths:
+        - Dockerfile
+        - render.yaml
     envVars:
       - key: APP_ENV
         value: production
@@ -17,27 +18,16 @@ services:
       - key: DB_CONNECTION
         value: mysql
       - key: DB_HOST
-        fromService:
-            name: mysql
-            type: mysql
-            property: host
+        value: mysql
       - key: DB_PORT
         value: 3306
       - key: DB_DATABASE
-        fromService:
-            name: mysql
-            type: mysql
-            property: database
+        value: laravel_db
       - key: DB_USERNAME
-        fromService:
-            name: mysql
-            type: mysql
-            property: user
+        value: root
       - key: DB_PASSWORD
-        fromService:
-            name: mysql
-            type: mysql
-            property: password
+        value: root
+
 databases:
   - name: mysql
     plan: free

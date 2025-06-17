@@ -13,35 +13,39 @@ class CreateWorkOrder extends CreateRecord
 {
     protected static string $resource = WorkOrderResource::class;
 
-    // protected function getHeaderActions(): array
-    // {
-    //     return [
-    //         Actions\Action::make('back')
-    //             ->label('Nazad')
-    //             ->url(fn () => WorkOrderResource::getUrl('index'))
-    //             ->color('secondary')
-    //             ->icon('heroicon-o-arrow-left'),
-    //     ];
-    // }
-
+    /**
+     * Get the URL to redirect to after creation.
+     *
+     * @return string
+     */
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
     }
 
+    /**
+     * Automatsko dodaje stavke radnog naloga ako tip nije custom.
+     *
+     * Kada se kreira novi radni nalog, a tip nije custom, ovaj metoda će
+     * automatski dodati sve faze rada koji pripadaju proizvodu koji je
+     * vezan za radni nalog.
+     */
     protected function afterCreate(): void
     {
         $workOrder = $this->record;
 
-        // Učitaj produkt sa radnim fazama
+        // Ako je tip custom, preskoči automatsko dodavanje stavki
+        if ($workOrder->type === 'custom') {
+            return;
+        }
+
         $product = Product::with('workPhases')->find($workOrder->product_id);
 
-        foreach ($product->workPhases as $index => $workPhase) {
+        foreach ($product->workPhases as $workPhase) {
             WorkOrderItem::create([
                 'work_order_id' => $workOrder->id,
                 'work_phase_id' => $workPhase->id,
                 'product_id' => $product->id,
-                //'code' => 'Faza ' . ($index + 1),
                 'status' => 'pending',
                 'is_confirmed' => false,
                 'required_to_complete' => $workOrder->quantity,

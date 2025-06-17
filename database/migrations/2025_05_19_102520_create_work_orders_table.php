@@ -15,15 +15,16 @@ return new class extends Migration
 
             $table->string('full_name', 255);      // puno ime, može i nullable ako nije obavezno
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->nullable()->constrained()->onDelete('cascade');
 
             // Novi dodati stupci:
-            $table->string('work_order_number', 255);
-            $table->string('series', 255);         // serija
+            $table->string('work_order_number', 255)->nullable();
+            $table->string('series', 255)->nullable();         // serija
             $table->unsignedInteger('quantity');
 
 
             $table->date('launch_date');
+            $table->enum('type', ['standard', 'custom'])->default('standard');
             $table->enum('status', ['aktivan', 'u_toku', 'zavrsen', 'otkazan'])->default('aktivan');
             $table->enum('status_progresije', ['hitno', 'ceka se', 'aktivan'])->default('aktivan');
 

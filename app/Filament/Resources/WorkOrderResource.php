@@ -1,5 +1,7 @@
 <?php
 
+// app/Filament/Resources/WorkOrderResource.php
+
 namespace App\Filament\Resources;
 
 use App\Helpers\FilamentColumns;
@@ -20,6 +22,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Tables\Actions\Action;
 
 class WorkOrderResource extends Resource
 {
@@ -28,16 +31,34 @@ class WorkOrderResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationLabel = 'Radni nalozi';
 
+    /**
+     * Get the navigation group for the resource.
+     *
+     * @return string|null
+     */
     public static function getNavigationGroup(): ?string
     {
         return 'Proizvodnja';
     }
 
+
+    /**
+     * Control the order in which the resource is displayed in the navigation.
+     *
+     * @return int|null
+     */
     public static function getNavigationSort(): ?int
     {
         return 1;
     }
 
+    /**
+     * The form schema definition for the resource.
+     *
+     * @param  \Filament\Forms\Form  $form
+     * @param  \App\Models\WorkOrder|null  $record
+     * @return \Filament\Forms\Form
+     */
     public static function form(Form $form, $record = null): Form
     {
         $updateFullName = function ($get, $set) {
@@ -132,20 +153,43 @@ class WorkOrderResource extends Resource
         ]);
         } else {
             return $form
-            ->schema([
-                Select::make('status_progresije')
-                    ->label('Status progresije')
-                    ->options([
-                        'hitno' => '🔴 Hitno',
-                        'ceka se' => '🟡 Čeka se',
-                        'aktivan' => '🟢 Aktivan',
-                    ])
-                    ->default('aktivan')
-                    ->required(),
-            ]);
+                ->schema([
+                    Select::make('status')
+                        ->label('Status')
+                        ->options([
+                            'aktivan' => 'Aktivan',
+                            'zavrsen' => 'Završen',
+                            'neaktivan' => 'Neaktivan',
+                        ])
+                        ->default(fn ($record) => $record->status)
+                        ->visible(fn ($record) => $record?->type === 'custom') // 👈 ovde je razlika
+                        ->required(),
+
+                    Select::make('status_progresije')
+                        ->label('Status progresije')
+                        ->options([
+                            'hitno' => '🔴 Hitno',
+                            'ceka se' => '🟡 Čeka se',
+                            'aktivan' => '🟢 Aktivan',
+                        ])
+                        ->default('aktivan')
+                        ->required(),
+                ]);
         }
     }
 
+    /**
+     * The table schema definition for the resource.
+     *
+     * Defines the columns, actions, and bulk actions for the table
+     * display. The columns are: full name, user, product, completion percentage,
+     * launch date, status, and progresija. The actions are: edit, view, delete,
+     * and transfer to warehouse (only visible for completed orders with
+     * confirmed items). The bulk actions are: delete.
+     *
+     * @param  \Filament\Tables\Table  $table
+     * @return \Filament\Tables\Table
+     */
     public static function table(Table $table): Table
     {
         return $table
@@ -153,6 +197,19 @@ class WorkOrderResource extends Resource
                 TextColumn::make('full_name')->label('Radni nalog')->searchable()->sortable()->toggleable(),
                 TextColumn::make('user.name')->label('Izdao')->searchable()->sortable()->toggleable(),
                 TextColumn::make('product.name')->label('Artikal')->searchable()->sortable()->toggleable(),
+                BadgeColumn::make('completion_percentage')
+                    ->label('Procenat izvršenja')
+                    ->colors([
+                        'danger' => fn ($state) => $state < 50,
+                        'warning' => fn ($state) => $state >= 50 && $state < 80,
+                        'info' => fn ($state) => $state >= 80 && $state < 100,
+                        'success' => fn ($state) => $state === 100,
+                    ])
+                    ->formatStateUsing(fn ($state) => $state . ' %')
+                    ->sortable()
+                    ->alignCenter()
+                    ->toggleable()
+                    ->searchable(), // ako koristiš kao tekst
                 TextColumn::make('launch_date')->label('Datum lansiranja')->date()->sortable(),
                 BadgeColumn::make('status')->label('Status')->colors([
                     'aktivan' => 'success',
@@ -234,6 +291,11 @@ class WorkOrderResource extends Resource
             ->recordAction(null); // spriječava otvaranje modala i koristi URL
     }
 
+    /**
+     * Get the relation managers that should be available for the resource.
+     *
+     * @return array
+     */
     public static function getRelations(): array
     {
         return [
@@ -241,12 +303,20 @@ class WorkOrderResource extends Resource
         ];
     }
 
+    /**
+     * The pages that should be available for the resource.
+     *
+     * The pages are: edit, index, create, custom-create, and view.
+     *
+     * @return array
+     */
     public static function getPages(): array
     {
         return [
             'edit' => Pages\EditWorkOrder::route('/{record}/edit'),
             'index' => Pages\ListWorkOrders::route('/'),
             'create' => Pages\CreateWorkOrder::route('/create'),
+            'custom-create' => Pages\CustomCreateWorkOrder::route('/custom-create'),
             'view' => Pages\ViewWorkOrder::route('/{record}'),
         ];
     }

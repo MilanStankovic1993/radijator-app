@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: laravel-radijator
+    env: docker
+    plan: free
+    branch: main
+    buildCommand: ""
+    startCommand: "php artisan serve --host=0.0.0.0 --port=8080"
+    healthCheckPath: /
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_DEBUG
+        value: false
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromService:
+            name: mysql
+            type: mysql
+            property: host
+      - key: DB_PORT
+        value: 3306
+      - key: DB_DATABASE
+        fromService:
+            name: mysql
+            type: mysql
+            property: database
+      - key: DB_USERNAME
+        fromService:
+            name: mysql
+            type: mysql
+            property: user
+      - key: DB_PASSWORD
+        fromService:
+            name: mysql
+            type: mysql
+            property: password
+databases:
+  - name: mysql
+    plan: free

@@ -1,36 +1,34 @@
 FROM php:8.3-fpm
 
-# System dependencies
+# System dependencies including PostgreSQL client i libicu za intl PHP extension
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev libzip-dev libpq-dev default-mysql-client libicu-dev postgresql-client
 
-# PHP extensions
+# PHP extensions including intl, pdo_mysql, pdo_pgsql
 RUN docker-php-ext-install intl pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl gd
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
 WORKDIR /var/www
 
-# Copy Laravel project files
+# Copy Laravel files
 COPY . .
 
-# Kopiraj production .env fajl
+# Copy production .env as primary environment config
 COPY .env.production .env
 
-# Install dependencies and prepare Laravel + Filament
+# Laravel & Filament setup: install dependencies, clear cache, cache config/routes/views, storage link, migrate, seed, compile filament assets
 RUN composer install --optimize-autoloader --no-dev \
  && php artisan config:clear \
+ && php artisan cache:clear \
  && php artisan config:cache \
  && php artisan route:cache \
  && php artisan view:cache \
  && php artisan storage:link \
  && php artisan migrate --force \
  && php artisan db:seed --force \
- && php artisan filament:assets --no-interaction \
- && mkdir -p public/vendor \
- && cp -r public/vendor /var/www/public/vendor
+ && php artisan filament:assets --no-interaction
 
-# Start Laravel dev server
+# Run Laravel built-in server (note: for production consider nginx or apache instead)
 CMD php artisan serve --host=0.0.0.0 --port=8080

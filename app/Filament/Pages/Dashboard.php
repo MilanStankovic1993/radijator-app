@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use Filament\Pages\Page;
 use App\Filament\Widgets\UserActionsWidget;
 
+/*
 class Dashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-home';  // Ikonica kad nisi na stranici
@@ -22,3 +23,4 @@ class Dashboard extends Page
     //     ];
     // }
 }
+*/

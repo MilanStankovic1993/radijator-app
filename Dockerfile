@@ -1,11 +1,11 @@
 FROM php:8.3-fpm
 
-# System dependencies
+# System dependencies including libicu-dev for intl PHP extension
 RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev libzip-dev libpq-dev default-mysql-client
+    git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev libzip-dev libpq-dev default-mysql-client libicu-dev
 
-# PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl gd
+# PHP extensions including intl
+RUN docker-php-ext-install intl pdo pdo_mysql mbstring zip exif pcntl gd
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -14,7 +14,7 @@ WORKDIR /var/www
 
 COPY . .
 
-# Install dependencies and run artisan setup commands
+# Install dependencies and run artisan setup commands including migrations and seeders
 RUN composer install --optimize-autoloader --no-dev \
  && php artisan config:cache \
  && php artisan route:cache \

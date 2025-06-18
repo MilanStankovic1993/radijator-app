@@ -34,12 +34,12 @@ class RadijatorAdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->brandLogo(asset('images/logo.png'))
-            ->brandName('Radijator Inženjering')
             ->default()
             ->id('radijator_admin')
             ->path('radijator_admin')
             ->login()
+            ->brandName('Radijator Inženjering')
+            ->brandLogo(asset('images/logo.png'))
             ->databaseNotifications()
             ->colors([
                 'primary' => Color::Amber,
@@ -68,7 +68,7 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->auth(fn () => auth()->check()); // ✅ DODATO: svi prijavljeni korisnici imaju pristup
+            ->auth(fn () => auth()->check()); // ✅ OVO JE ISPRAVNO
     }
 
 }

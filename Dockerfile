@@ -38,16 +38,16 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
  && ln -sf /dev/stderr /var/log/nginx/error.log
 
 # Laravel setup
-RUN composer install --optimize-autoloader --no-dev \
- && php artisan config:clear \
- && php artisan cache:clear \
- && php artisan config:cache \
- && php artisan route:cache \
- && php artisan view:cache \
- && php artisan storage:link || true \
- && php artisan migrate --force \
- && php artisan db:seed --force \
- && php artisan filament:assets --no-interaction --delete-before
+RUN composer install --optimize-autoloader --no-dev
+RUN php artisan config:clear
+RUN php artisan cache:clear
+RUN php artisan config:cache
+RUN php artisan route:cache
+RUN php artisan view:cache
+RUN php artisan storage:link || true
+RUN php artisan migrate --force
+RUN php artisan db:seed --force
+RUN php artisan filament:assets --no-interaction --delete-before
 
 # Kopiranje supervisor konfiguracije
 COPY supervisord.conf /etc/supervisord.conf

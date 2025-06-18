@@ -1259,6 +1259,7 @@ class ProductWorkPhaseSeeder extends Seeder
                     $workPhase = WorkPhase::create([
                         'name' => $phaseName,
                         'time_norm' => $timeNorm,
+                        'location' => 'Seovac',
                         'number_of_workers' => $numberOfWorkers,
                     ]);
                 }

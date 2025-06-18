@@ -33,7 +33,7 @@ class RadijatorAdminPanelProvider extends PanelProvider
 
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        $panel = $panel
             ->default()
             ->id('radijator_admin')
             ->path('radijator_admin')
@@ -67,8 +67,14 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->auth(fn () => auth()->check()); // ✅ OVO JE ISPRAVNO
+            ]);
+
+        // Ovde se dodatno dodeljuje auth pravilo
+        $panel->auth(function () {
+            return auth()->check();
+        });
+
+        return $panel;
     }
 
 }

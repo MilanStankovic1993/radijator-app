@@ -48,7 +48,7 @@ RUN php artisan clear-compiled && composer dump-autoload
 RUN php artisan config:clear
 RUN php artisan cache:clear
 RUN php artisan config:cache
-RUN php artisan route:cache
+RUN php artisan route:clear && php artisan route:cache
 RUN php artisan view:cache
 RUN php artisan storage:link || true
 RUN php artisan migrate --force

@@ -47,3 +47,10 @@ Route::get('/check-access', function () {
         'can_access_panel' => $result,
     ];
 });
+Route::get('/test-user', function () {
+    return [
+        'auth_check' => auth()->check(),
+        'user' => optional(auth()->user())->email,
+        'roles' => auth()->check() ? auth()->user()->getRoleNames() : [],
+    ];
+});

@@ -46,7 +46,7 @@ class User extends Authenticatable
         \Log::info('Email: ' . $this->email);
         \Log::info('auth()->check(): ' . json_encode(auth()->check()));
         \Log::info('Role names: ' . json_encode($this->getRoleNames()));
-        
+
         return $this->hasRole('admin');
     }
 

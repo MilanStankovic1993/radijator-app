@@ -54,3 +54,6 @@ Route::get('/test-user', function () {
         'roles' => auth()->check() ? auth()->user()->getRoleNames() : [],
     ];
 });
+Route::get('/logs', function () {
+    return response()->file(storage_path('logs/laravel.log'));
+});

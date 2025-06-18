@@ -71,3 +71,10 @@ Route::get('/test-panel-access', function () {
         'same_site' => config('session.same_site'),
     ];
 });
+Route::get('/ajax-check', function () {
+    return response()->json([
+        'auth' => auth()->check(),
+        'user' => auth()->user()?->email,
+        'roles' => auth()->user()?->getRoleNames(),
+    ]);
+});

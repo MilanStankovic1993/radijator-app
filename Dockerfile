@@ -29,6 +29,9 @@ RUN [ -f /etc/nginx/conf.d/default.conf ] && rm /etc/nginx/conf.d/default.conf |
 # Kopiranje naše nginx konfiguracije
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
+# Kopiraj glavnu nginx konfiguraciju
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
 # Omogući logove da se vide u Docker logovima
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \
  && ln -sf /dev/stderr /var/log/nginx/error.log
@@ -40,7 +43,7 @@ RUN composer install --optimize-autoloader --no-dev \
  && php artisan config:cache \
  && php artisan route:cache \
  && php artisan view:cache \
- && php artisan storage:link \
+ && php artisan storage:link || true \
  && php artisan migrate --force \
  && php artisan db:seed --force \
  && php artisan filament:assets --no-interaction

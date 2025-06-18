@@ -20,6 +20,9 @@ WORKDIR /var/www
 # Kopiranje Laravel fajlova
 COPY . .
 
+# Postavi vlasništvo nad storage i cache folderima da Laravel može pisati
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+
 # Kopiranje .env produkcionog fajla
 COPY .env.production .env
 
@@ -28,8 +31,6 @@ RUN [ -f /etc/nginx/conf.d/default.conf ] && rm /etc/nginx/conf.d/default.conf |
 
 # Kopiranje naše nginx konfiguracije
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
-
-# Kopiraj glavnu nginx konfiguraciju
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Omogući logove da se vide u Docker logovima

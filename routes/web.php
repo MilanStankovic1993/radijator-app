@@ -57,3 +57,17 @@ Route::get('/test-user', function () {
 Route::get('/logs', function () {
     return response()->file(storage_path('logs/laravel.log'));
 });
+Route::get('/test-panel-access', function () {
+    $user = auth()->user();
+    $panel = filament()->getCurrentPanel();
+
+    return [
+        'email' => optional($user)->email,
+        'check' => optional($user)?->canAccessPanel($panel),
+        'session' => auth()->check(),
+        'cookie' => request()->cookie(config('session.cookie')),
+        'domain' => config('session.domain'),
+        'driver' => config('session.driver'),
+        'same_site' => config('session.same_site'),
+    ];
+});

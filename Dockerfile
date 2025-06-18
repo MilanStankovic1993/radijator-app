@@ -53,6 +53,7 @@ RUN php artisan view:cache
 RUN php artisan storage:link || true
 RUN php artisan migrate --force
 RUN php artisan db:seed --force
+RUN php artisan livewire:publish --assets
 RUN rm -rf public/build && php artisan filament:assets --no-interaction
 
 # Kopiranje supervisor konfiguracije

@@ -40,6 +40,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        return $this->hasRole('admin'); // ili druga tvoja logika
+    }
+
     /**
      * Get the attributes that should be cast.
      *

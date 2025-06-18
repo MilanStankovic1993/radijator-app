@@ -1,12 +1,16 @@
 FROM php:8.3-fpm
 
-# Instalacija sistemskih paketa uključujući nginx i supervisor
+# Instalacija sistemskih paketa uključujući nginx, supervisor i dependencies
 RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
     git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev \
     libonig-dev libxml2-dev libzip-dev libpq-dev default-mysql-client libicu-dev \
     postgresql-client
+
+# Instalacija Node.js 18.x za Vite/Filament build
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+ && apt-get install -y nodejs
 
 # Instalacija PHP ekstenzija
 RUN docker-php-ext-install intl pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl gd
@@ -39,6 +43,7 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
 
 # Laravel setup
 RUN composer install --optimize-autoloader --no-dev
+RUN npm install
 RUN php artisan config:clear
 RUN php artisan cache:clear
 RUN php artisan config:cache

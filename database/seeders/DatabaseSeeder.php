@@ -12,31 +12,28 @@ class DatabaseSeeder extends Seeder
     {
         $driver = DB::getDriverName();
 
+        // ✅ Bez pokušaja SET session_replication_role — nije dozvoljen na Render PGSQL
         if ($driver === 'mysql') {
-            // MySQL: disable foreign key checks
             Schema::disableForeignKeyConstraints();
-        } elseif ($driver === 'pgsql') {
-            // PostgreSQL: disable constraint checks
-            DB::statement('SET session_replication_role = replica;');
         }
 
-        // Truncate tabele
-        \App\Models\WorkOrderItem::truncate();
-        \App\Models\WorkOrder::truncate();
-        \App\Models\Product::truncate();
-        \App\Models\WorkPhase::truncate();
-        \App\Models\Customer::truncate();
-        \App\Models\User::truncate();
-        \Spatie\Permission\Models\Role::truncate();
-        \Spatie\Permission\Models\Permission::truncate();
+        // 🚫 Ne koristi truncate ako može da izazove FK constraint greške — koristi delete()
+        DB::table('work_order_items')->delete();
+        DB::table('work_orders')->delete();
+        DB::table('products')->delete();
+        DB::table('work_phases')->delete();
+        DB::table('customers')->delete();
+        DB::table('users')->delete();
+        DB::table('roles')->delete();
+        DB::table('permissions')->delete();
+        DB::table('model_has_roles')->delete();
+        DB::table('role_has_permissions')->delete();
 
         if ($driver === 'mysql') {
             Schema::enableForeignKeyConstraints();
-        } elseif ($driver === 'pgsql') {
-            DB::statement('SET session_replication_role = DEFAULT;');
         }
 
-        // Seeduj
+        // ✅ Seeduj
         $this->call([
             RolesAndPermissionsSeeder::class,
             UserSeeder::class,

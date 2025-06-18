@@ -1,24 +1,32 @@
 FROM php:8.3-fpm
 
-# System dependencies including PostgreSQL client i libicu za intl PHP extension
+# Instalacija sistemskih paketa uključujući nginx i supervisor
 RUN apt-get update && apt-get install -y \
-    git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev libzip-dev libpq-dev default-mysql-client libicu-dev postgresql-client
+    nginx \
+    supervisor \
+    git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev \
+    libonig-dev libxml2-dev libzip-dev libpq-dev default-mysql-client libicu-dev \
+    postgresql-client
 
-# PHP extensions including intl, pdo_mysql, pdo_pgsql
+# Instalacija PHP ekstenzija
 RUN docker-php-ext-install intl pdo pdo_mysql pdo_pgsql mbstring zip exif pcntl gd
 
-# Install Composer
+# Instalacija Composera
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Radni direktorijum
 WORKDIR /var/www
 
-# Copy Laravel files
+# Kopiranje Laravel fajlova
 COPY . .
 
-# Copy production .env as primary environment config
+# Kopiranje .env produkcionog fajla
 COPY .env.production .env
 
-# Laravel & Filament setup: install dependencies, clear cache, cache config/routes/views, storage link, migrate, seed, compile filament assets
+# Kopiranje nginx konfiguracije
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+
+# Laravel setup
 RUN composer install --optimize-autoloader --no-dev \
  && php artisan config:clear \
  && php artisan cache:clear \
@@ -30,5 +38,11 @@ RUN composer install --optimize-autoloader --no-dev \
  && php artisan db:seed --force \
  && php artisan filament:assets --no-interaction
 
-# Run Laravel built-in server (note: for production consider nginx or apache instead)
-CMD php artisan serve --host=0.0.0.0 --port=8080
+# Kopiranje supervisor konfiguracije
+COPY supervisord.conf /etc/supervisord.conf
+
+# Izloži port 80
+EXPOSE 80
+
+# Startuj nginx i php-fpm preko supervisora
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

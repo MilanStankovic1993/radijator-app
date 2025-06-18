@@ -21,3 +21,14 @@ Route::get('/debug', function () {
 
     return auth()->check() ? 'OK' : 'NO';
 });
+Route::get('/session-check', function () {
+    if (!auth()->check()) {
+        return 'Not logged in';
+    }
+
+    $user = auth()->user();
+    return [
+        'email' => $user->email,
+        'roles' => $user->getRoleNames(),
+    ];
+});

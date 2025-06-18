@@ -67,6 +67,8 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->auth(fn () => auth()->check()); // ✅ DODATO: svi prijavljeni korisnici imaju pristup
     }
+
 }

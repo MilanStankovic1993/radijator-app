@@ -42,8 +42,10 @@ class User extends Authenticatable
 
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        \Log::info('Checking panel access for user: ' . $this->email);
-        \Log::info('Roles: ' . json_encode($this->getRoleNames()));
+        \Log::info('=== Filament panel access check ===');
+        \Log::info('Email: ' . $this->email);
+        \Log::info('auth()->check(): ' . json_encode(auth()->check()));
+        \Log::info('Role names: ' . json_encode($this->getRoleNames()));
         
         return $this->hasRole('admin');
     }

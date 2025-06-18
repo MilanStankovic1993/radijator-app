@@ -23,8 +23,8 @@ COPY . .
 # Kopiranje .env produkcionog fajla
 COPY .env.production .env
 
-# OBRIŠI default nginx konfiguraciju (da ne preuzme control)
-RUN rm /etc/nginx/conf.d/default.conf
+# OBRIŠI default nginx konfiguraciju ako postoji
+RUN [ -f /etc/nginx/conf.d/default.conf ] && rm /etc/nginx/conf.d/default.conf || true
 
 # Kopiranje naše nginx konfiguracije
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf

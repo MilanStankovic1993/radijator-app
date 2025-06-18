@@ -44,6 +44,7 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
 # Laravel setup
 RUN composer install --optimize-autoloader --no-dev
 RUN npm install
+RUN php artisan clear-compiled && composer dump-autoload
 RUN php artisan config:clear
 RUN php artisan cache:clear
 RUN php artisan config:cache
@@ -52,7 +53,7 @@ RUN php artisan view:cache
 RUN php artisan storage:link || true
 RUN php artisan migrate --force
 RUN php artisan db:seed --force
-RUN php artisan filament:assets --no-interaction --delete-before
+RUN rm -rf public/build && php artisan filament:assets --no-interaction
 
 # Kopiranje supervisor konfiguracije
 COPY supervisord.conf /etc/supervisord.conf

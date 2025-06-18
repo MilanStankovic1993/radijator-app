@@ -12,3 +12,12 @@ Route::get('/export/work-order/{id}', function ($id) {
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/debug', function () {
+    $user = \App\Models\User::first(); // koristi prvog korisnika, ili izmeni ID
+    auth()->login($user);
+
+    \Log::info('User: ' . $user->email);
+    \Log::info('Roles: ' . json_encode($user->getRoleNames()));
+
+    return auth()->check() ? 'OK' : 'NO';
+});

@@ -42,7 +42,10 @@ class User extends Authenticatable
 
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        return $this->hasRole('admin'); // ili druga tvoja logika
+        \Log::info('Checking panel access for user: ' . $this->email);
+        \Log::info('Roles: ' . json_encode($this->getRoleNames()));
+        
+        return $this->hasRole('admin');
     }
 
     /**

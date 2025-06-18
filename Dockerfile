@@ -47,7 +47,7 @@ RUN composer install --optimize-autoloader --no-dev \
  && php artisan storage:link || true \
  && php artisan migrate --force \
  && php artisan db:seed --force \
- && php artisan filament:assets --no-interaction
+ && php artisan filament:assets --no-interaction --delete-before
 
 # Kopiranje supervisor konfiguracije
 COPY supervisord.conf /etc/supervisord.conf

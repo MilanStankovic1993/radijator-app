@@ -30,7 +30,7 @@ return [
     'path' => env('SESSION_PATH', '/'),
 
     // 🔥 OBAVEZNO SA TAČKOM ISPRED DOMENA (za subdomene)
-    'domain' => env('SESSION_DOMAIN', '.laravel-radijator.onrender.com'),
+    'domain' => env('SESSION_DOMAIN', null),
 
     // 🔒 Samo preko HTTPS-a
     'secure' => env('SESSION_SECURE_COOKIE', true),

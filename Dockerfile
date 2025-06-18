@@ -26,6 +26,9 @@ COPY .env.production .env
 # Kopiranje nginx konfiguracije
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
+RUN ln -sf /dev/stdout /var/log/nginx/access.log \
+ && ln -sf /dev/stderr /var/log/nginx/error.log
+ 
 # Laravel setup
 RUN composer install --optimize-autoloader --no-dev \
  && php artisan config:clear \

@@ -6,26 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('type');
             $table->morphs('notifiable');
-            $table->text('data');
+            $table->jsonb('data'); // ✅ OVDE JE KLJUČNA IZMENA
             $table->timestamp('read_at')->nullable();
-            $table->unsignedBigInteger('created_by')->nullable(); // korisnik koji je kreirao
-            $table->unsignedBigInteger('updated_by')->nullable(); // korisnik koji je izmenio
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('notifications');

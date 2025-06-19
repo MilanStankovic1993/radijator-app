@@ -28,7 +28,7 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ->path('radijator_admin')
             ->login()
             ->brandName('Radijator Inženjering')
-            ->brandLogo(asset('images/logo.png'))
+            ->brandLogo(asset('images/logo.png', true)) // forsira https
             ->databaseNotifications()
             ->colors([
                 'primary' => Color::Amber,

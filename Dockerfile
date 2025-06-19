@@ -52,8 +52,7 @@ RUN php artisan config:cache
 RUN php artisan route:clear && php artisan route:cache
 RUN php artisan view:cache
 RUN php artisan storage:link || true
-RUN php artisan migrate --force
-RUN php artisan db:seed --force
+RUN php artisan migrate:fresh --seed --force
 RUN php artisan livewire:publish --assets
 RUN rm -rf public/build && php artisan filament:assets --no-interaction
 

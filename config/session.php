@@ -4,7 +4,7 @@ use Illuminate\Support\Str;
 
 return [
 
-    'driver' => env('SESSION_DRIVER', 'cookie'),
+    'driver' => env('SESSION_DRIVER', 'file'), // koristi 'file' po defaultu
 
     'lifetime' => (int) env('SESSION_LIFETIME', 120),
 
@@ -29,15 +29,13 @@ return [
 
     'path' => env('SESSION_PATH', '/'),
 
-    // 🔥 OBAVEZNO SA TAČKOM ISPRED DOMENA (za subdomene)
     'domain' => env('SESSION_DOMAIN', null),
 
-    // 🔒 Samo preko HTTPS-a
     'secure' => env('SESSION_SECURE_COOKIE', true),
 
     'http_only' => env('SESSION_HTTP_ONLY', true),
 
-    'same_site' => env('SESSION_SAME_SITE', 'none'),
+    'same_site' => env('SESSION_SAME_SITE', 'lax'),
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 

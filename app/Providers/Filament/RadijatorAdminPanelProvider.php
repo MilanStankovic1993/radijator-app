@@ -45,13 +45,7 @@ class RadijatorAdminPanelProvider extends PanelProvider
                 FilamentInfoWidget::class,
             ])
             ->middleware([
-                EncryptCookies::class,
-                AddQueuedCookiesToResponse::class,
-                StartSession::class,
-                AuthenticateSession::class,
-                ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
-                SubstituteBindings::class,
+                'web',
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -10,7 +9,7 @@ class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('customers')->insert([
+        $customers = [
             [
                 'name' => 'Petar Petrović',
                 'type' => 'individual',
@@ -25,8 +24,6 @@ class CustomerSeeder extends Seeder
                 'company_name' => null,
                 'pib' => null,
                 'contact_person' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Milan Marković',
@@ -42,8 +39,6 @@ class CustomerSeeder extends Seeder
                 'company_name' => null,
                 'pib' => null,
                 'contact_person' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Firma ABC d.o.o.',
@@ -59,8 +54,6 @@ class CustomerSeeder extends Seeder
                 'company_name' => 'Firma ABC d.o.o.',
                 'pib' => '123456789',
                 'contact_person' => 'Ivana Ilić',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'XYZ Solutions',
@@ -76,9 +69,19 @@ class CustomerSeeder extends Seeder
                 'company_name' => 'XYZ Solutions',
                 'pib' => '987654321',
                 'contact_person' => 'Marko Milenković',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        ]);
+            ],
+        ];
+
+        foreach ($customers as $customer) {
+            DB::table('customers')->updateOrInsert(
+                ['name' => $customer['name']],
+                array_merge($customer, [
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ])
+            );
+        }
+
+        $this->command->info('✅ Customers seeded.');
     }
 }

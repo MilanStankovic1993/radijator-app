@@ -8,60 +8,50 @@ use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        $adminRole = Role::where('name', 'admin')->first();
-        $managerRole = Role::where('name', 'manager')->first();
-        $viewerRole = Role::where('name', 'viewer')->first();
+        $adminRole = Role::firstWhere('name', 'admin');
+        $managerRole = Role::firstWhere('name', 'manager');
+        $viewerRole = Role::firstWhere('name', 'viewer');
 
-        // 1. Admin korisnik (default)
+        // 🔐 Default password
+        $defaultPassword = bcrypt('password123');
+
+        // 👤 Admin korisnik
         $adminUser = User::updateOrCreate(
             ['email' => 'admin@example.com'],
-            [
-                'name' => 'Admin User',
-                'password' => bcrypt('password123'),
-            ]
+            ['name' => 'Admin User', 'password' => $defaultPassword]
         );
-        $adminUser->assignRole($adminRole);
+        $adminUser->syncRoles([$adminRole]);
 
-        // 2. Manager
+        // 👤 Manager korisnik
         $managerUser = User::updateOrCreate(
             ['email' => 'manager@example.com'],
-            [
-                'name' => 'Manager User',
-                'password' => bcrypt('password123'),
-            ]
+            ['name' => 'Manager User', 'password' => $defaultPassword]
         );
-        $managerUser->assignRole($managerRole);
+        $managerUser->syncRoles([$managerRole]);
 
-        // 3. Viewer
+        // 👤 Viewer korisnik
         $viewerUser = User::updateOrCreate(
             ['email' => 'viewer@example.com'],
-            [
-                'name' => 'Viewer User',
-                'password' => bcrypt('password123'),
-            ]
+            ['name' => 'Viewer User', 'password' => $defaultPassword]
         );
-        $viewerUser->assignRole($viewerRole);
+        $viewerUser->syncRoles([$viewerRole]);
 
-        // 4. Milan (admin)
+        // 👤 Milan (admin)
         $milan = User::updateOrCreate(
             ['email' => 'milan.stankovic@radijator.rs'],
-            [
-                'name' => 'Milan',
-                'password' => bcrypt('28januar'),
-            ]
+            ['name' => 'Milan', 'password' => bcrypt('28januar')]
         );
-        $milan->assignRole($adminRole);
+        $milan->syncRoles([$adminRole]);
 
-        // 5. Mihajlo (admin)
+        // 👤 Mihajlo (admin)
         $mihajlo = User::updateOrCreate(
             ['email' => 'mihajlo.ilic@radijator.rs'],
-            [
-                'name' => 'Mihajlo',
-                'password' => bcrypt('mihajlo123'),
-            ]
+            ['name' => 'Mihajlo', 'password' => bcrypt('mihajlo123')]
         );
-        $mihajlo->assignRole($adminRole);
+        $mihajlo->syncRoles([$adminRole]);
+
+        $this->command->info('✅ Users seeded successfully.');
     }
 }

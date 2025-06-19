@@ -5,12 +5,14 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        // 🔄 Očisti keširane dozvole
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $resources = [
             'users',
@@ -24,21 +26,24 @@ class RolesAndPermissionsSeeder extends Seeder
             'reports',
         ];
 
+        // 🛡️ Kreiraj CRUD dozvole za svaki resource
         foreach ($resources as $resource) {
-            Permission::firstOrCreate(['name' => 'view ' . $resource]);
-            Permission::firstOrCreate(['name' => 'create ' . $resource]);
-            Permission::firstOrCreate(['name' => 'edit ' . $resource]);
-            Permission::firstOrCreate(['name' => 'delete ' . $resource]);
+            foreach (['view', 'create', 'edit', 'delete'] as $action) {
+                Permission::firstOrCreate(['name' => "$action $resource"]);
+            }
         }
 
+        // 🛠️ Specifične permisije
         Permission::firstOrCreate(['name' => 'manage users']);
         Permission::firstOrCreate(['name' => 'manage roles']);
 
+        // 🎩 Admin rola
         $admin = Role::firstOrCreate(['name' => 'admin']);
-        $admin->givePermissionTo(Permission::all());
+        $admin->syncPermissions(Permission::all());
 
+        // 📊 Manager rola
         $manager = Role::firstOrCreate(['name' => 'manager']);
-        $manager->givePermissionTo([
+        $manager->syncPermissions([
             'view users', 'edit users',
             'view products', 'create products', 'edit products',
             'view workorders', 'create workorders', 'edit workorders',
@@ -47,10 +52,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'manage roles',
         ]);
 
+        // 👁️ Viewer rola
         $viewer = Role::firstOrCreate(['name' => 'viewer']);
-        $viewer->givePermissionTo([
+        $viewer->syncPermissions([
             'view users',
             'view reports',
         ]);
+
+        $this->command->info('✅ Roles and permissions seeded.');
     }
 }

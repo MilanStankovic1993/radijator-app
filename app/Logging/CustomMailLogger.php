@@ -5,12 +5,13 @@ namespace App\Logging;
 use Illuminate\Support\Facades\Mail;
 use Monolog\Logger;
 use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\LogRecord;
 
 class CustomMailLogger extends AbstractProcessingHandler
 {
-    protected function write(array $record): void
+    protected function write(LogRecord $record): void
     {
-        Mail::raw($record['message'], function ($message) {
+        Mail::mailer('smtp')->raw($record->message, function ($message) {
             $message->to('milan.stankovic@radijator.rs')
                     ->subject('CRITICAL ERROR on Staging (Radijator)')
                     ->from('proizvodnja.app@radijator.rs', 'Radijator Inzenjering');

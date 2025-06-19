@@ -24,8 +24,9 @@ WORKDIR /var/www
 # Kopiranje Laravel fajlova
 COPY . .
 
-# Postavi vlasništvo nad storage i cache folderima da Laravel može pisati
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# Postavi vlasništvo i dozvole nad storage i cache folderima da Laravel može pisati
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+ && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 # Kopiranje .env produkcionog fajla
 COPY .env.production .env

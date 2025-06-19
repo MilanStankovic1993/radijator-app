@@ -78,3 +78,10 @@ Route::get('/ajax-check', function () {
         'roles' => auth()->user()?->getRoleNames(),
     ]);
 });
+
+Route::get('/debug-login', function () {
+    $user = User::first();
+    auth()->login($user);
+
+    return redirect('/radijator_admin');
+});

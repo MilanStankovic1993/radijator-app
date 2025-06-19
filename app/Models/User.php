@@ -11,8 +11,9 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\Models\Activity;
 use App\Traits\HasCommonFeatures;
+use Filament\Models\Contracts\FilamentUser;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasCommonFeatures;
@@ -42,8 +43,7 @@ class User extends Authenticatable
 
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        \Log::info('=== Filament panel access check ===');
-        \Log::info('Email: ' . $this->email);
+        \Log::info('=== Provera pristupa panelu: ' . $panel->getId() . ' ===');
         return true;
     }
 

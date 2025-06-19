@@ -21,7 +21,8 @@ Route::get('/logs', function () {
     abort_unless(auth()->check() && auth()->user()->hasRole('admin'), 403);
     return response()->file(storage_path('logs/laravel.log'));
 });
+
 Route::get('/test-error', function () {
-    Log::critical('Testna kritična greška sa staging okruženja!');
+    Log::critical('❌ Ovo je test kritične greške!');
     return 'Kritična greška testirana.';
 });

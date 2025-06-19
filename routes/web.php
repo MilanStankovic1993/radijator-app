@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Exports\WorkOrderItemsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\WorkOrder;
+use Illuminate\Support\Facades\Log;
 
 Route::get('/', function () {
     return view('welcome');
@@ -19,4 +20,8 @@ Route::get('/export/work-order/{id}', function ($id) {
 Route::get('/logs', function () {
     abort_unless(auth()->check() && auth()->user()->hasRole('admin'), 403);
     return response()->file(storage_path('logs/laravel.log'));
+});
+Route::get('/test-error', function () {
+    Log::critical('Testna kritična greška sa staging okruženja!');
+    return 'Kritična greška testirana.';
 });

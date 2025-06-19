@@ -130,16 +130,10 @@ return [
 
         // Novi email kanal za kritične greške
         'mail' => [
-            'driver' => 'monolog',
-            'handler' => NativeMailerHandler::class,
-            'with' => [
-                'to' => 'milan.stankovic@radijator.rs',
-                'subject' => 'CRITICAL ERROR on Staging (Radijator)',
-                'from' => 'proizvodnja.app@radijator.rs',
-            ],
+            'driver' => 'custom',
+            'via' => App\Logging\CustomMailLogger::class,
             'level' => 'critical',
         ],
-
     ],
 
 ];

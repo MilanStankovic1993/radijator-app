@@ -14,6 +14,7 @@ class Service extends Model
 
     protected $fillable = [
         'customer_id',
+        'product_id',
         'description',
         'created_by',
         'updated_by',
@@ -22,5 +23,9 @@ class Service extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+    public function product()
+    {
+        return $this->belongsTo(\App\Models\Product::class);
     }
 }

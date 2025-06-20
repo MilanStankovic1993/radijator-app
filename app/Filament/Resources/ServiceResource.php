@@ -48,9 +48,14 @@ class ServiceResource extends Resource
                     ->createOptionForm([
                         TextInput::make('name')->required()->label('Ime kupca'),
                     ])
-                    ->createOptionUsing(function (array $data) {
-                        return Customer::create($data)->id;
-                    }),
+                    ->createOptionUsing(fn (array $data) => Customer::create($data)->id),
+
+                Select::make('product_id')
+                    ->label('Proizvod')
+                    ->options(\App\Models\Product::all()->pluck('name', 'id'))
+                    ->searchable()
+                    ->preload()
+                    ->required(),
 
                 Textarea::make('description')
                     ->label('Opis reklamacije')
@@ -63,18 +68,9 @@ class ServiceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('customer.name')
-                    ->label('Kupac')
-                    ->sortable()
-                    ->searchable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('description')
-                    ->label('Opis')
-                    ->limit(50)
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
+                Tables\Columns\TextColumn::make('customer.name')->label('Kupac')->sortable()->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('product.name')->label('Proizvod')->sortable()->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('description')->label('Opis')->limit(50)->searchable()->sortable()->toggleable(),
                 ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([])

@@ -20,7 +20,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Tables\Actions\Action;
+use Filament\Tables\Filters\TernaryFilter;
 
 class WorkOrderResource extends Resource
 {
@@ -119,8 +119,9 @@ class WorkOrderResource extends Resource
                                     ->label('Status')
                                     ->options([
                                         'aktivan' => 'Aktivan',
+                                        'u_toku' => 'U toku',
                                         'zavrsen' => 'Završen',
-                                        'neaktivan' => 'Neaktivan',
+                                        'otkazan' => 'Otkazan',
                                     ])
                                     ->default('aktivan')
                                     ->disabled(),
@@ -134,8 +135,9 @@ class WorkOrderResource extends Resource
                         ->label('Status')
                         ->options([
                             'aktivan' => 'Aktivan',
+                            'u_toku' => 'U toku',
                             'zavrsen' => 'Završen',
-                            'neaktivan' => 'Neaktivan',
+                            'otkazan' => 'Otkazan',
                         ])
                         ->default(fn ($record) => $record->status)
                         ->visible(fn ($record) => $record?->type === 'custom')
@@ -189,7 +191,6 @@ class WorkOrderResource extends Resource
                         'success' => fn ($state) => $state === 100,
                     ])
                     ->formatStateUsing(fn ($state) => $state . ' %')
-                    ->sortable()
                     ->alignCenter()
                     ->toggleable()
                     ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
@@ -200,11 +201,22 @@ class WorkOrderResource extends Resource
                     ->sortable()
                     ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
 
-                BadgeColumn::make('status')->label('Status')->colors([
-                    'aktivan' => 'success',
-                    'neaktivan' => 'danger',
-                    'zavrsen' => 'warning',
-                ])
+                BadgeColumn::make('status')
+                    ->label('Status')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'aktivan' => 'Aktivan',
+                        'u_toku' => 'U toku',
+                        'zavrsen' => 'Završen',
+                        'otkazan' => 'Otkazan',
+                        default => ucfirst($state),
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'aktivan' => 'success',
+                        'u_toku' => 'info',
+                        'zavrsen' => 'warning',
+                        'otkazan' => 'danger',
+                        default => 'gray',
+                    })
                 ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
 
                 BadgeColumn::make('status_progresije')
@@ -295,7 +307,67 @@ class WorkOrderResource extends Resource
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ])
-            ->defaultSort('status', 'desc')
+            ->filters([
+                // Filter po procentu izvršenja
+                Tables\Filters\Filter::make('completion_percentage_range')
+                    ->label('Procenat izvršenja')
+                    ->form([
+                        Forms\Components\Select::make('range')
+                            ->label('Opseg')
+                            ->options([
+                                '0-49' => 'Manje od 50%',
+                                '50-79' => '50% do 79%',
+                                '80-99' => '80% do 99%',
+                                '100'   => '100%',
+                            ])
+                            ->placeholder('Odaberi opseg'),
+                    ])
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data) {
+                        if (empty($data['range'])) {
+                            return $query;
+                        }
+
+                        return $query->where(function ($query) use ($data) {
+                            return match ($data['range']) {
+                                '0-49' => $query->whereRaw('(SELECT COUNT(*) FROM work_order_items WHERE work_order_id = work_orders.id AND is_confirmed = true) * 100 / GREATEST((SELECT COUNT(*) FROM work_order_items WHERE work_order_id = work_orders.id), 1) < 50'),
+                                '50-79' => $query->whereRaw('(SELECT COUNT(*) FROM work_order_items WHERE work_order_id = work_orders.id AND is_confirmed = true) * 100 / GREATEST((SELECT COUNT(*) FROM work_order_items WHERE work_order_id = work_orders.id), 1) BETWEEN 50 AND 79'),
+                                '80-99' => $query->whereRaw('(SELECT COUNT(*) FROM work_order_items WHERE work_order_id = work_orders.id AND is_confirmed = true) * 100 / GREATEST((SELECT COUNT(*) FROM work_order_items WHERE work_order_id = work_orders.id), 1) BETWEEN 80 AND 99'),
+                                '100'   => $query->whereRaw('(SELECT COUNT(*) FROM work_order_items WHERE work_order_id = work_orders.id AND is_confirmed = true) * 100 / GREATEST((SELECT COUNT(*) FROM work_order_items WHERE work_order_id = work_orders.id), 1) = 100'),
+                                default => $query, // bez filtera ako vrednost nije podržana
+                            };
+                        });
+                    }),
+
+                // Filter po statusu
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'aktivan' => 'Aktivan',
+                        'u_toku' => 'U toku',
+                        'zavrsen' => 'Završen',
+                        'otkazan' => 'Otkazan',
+                    ])
+                    ->placeholder('Svi statusi'),
+
+                TernaryFilter::make('show_zavrseni')
+                    ->label('Prikaži završene')
+                    ->default(false)
+                    ->queries(
+                        true: fn ($query) => $query,
+                        false: fn ($query) => $query->where('status', '!=', 'zavrsen'),
+                        blank: fn ($query) => $query->where('status', '!=', 'zavrsen'),
+                    ),
+                // Filter po progresiji
+                Tables\Filters\SelectFilter::make('status_progresije')
+                    ->label('Status progresije')
+                    ->options([
+                        'hitno' => '🔴 Hitno',
+                        'ceka se' => '🟡 Čeka se',
+                        'aktivan' => '🟢 Aktivan',
+                    ])
+                    ->placeholder('Sve progresije'),
+            ])
+            ->defaultSort('updated_at', 'desc')
             ->searchDebounce(500)
             ->recordUrl(fn (WorkOrder $record) => static::getUrl('edit', ['record' => $record]))
             ->recordAction(null);

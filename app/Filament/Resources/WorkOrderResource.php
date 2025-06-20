@@ -1,7 +1,5 @@
 <?php
 
-// app/Filament/Resources/WorkOrderResource.php
-
 namespace App\Filament\Resources;
 
 use App\Helpers\FilamentColumns;
@@ -31,126 +29,104 @@ class WorkOrderResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationLabel = 'Radni nalozi';
 
-    /**
-     * Get the navigation group for the resource.
-     *
-     * @return string|null
-     */
     public static function getNavigationGroup(): ?string
     {
         return 'Proizvodnja';
     }
 
-
-    /**
-     * Control the order in which the resource is displayed in the navigation.
-     *
-     * @return int|null
-     */
     public static function getNavigationSort(): ?int
     {
         return 1;
     }
 
-    /**
-     * The form schema definition for the resource.
-     *
-     * @param  \Filament\Forms\Form  $form
-     * @param  \App\Models\WorkOrder|null  $record
-     * @return \Filament\Forms\Form
-     */
     public static function form(Form $form, $record = null): Form
     {
         $updateFullName = function ($get, $set) {
-            $set('full_name', 
+            $set('full_name',
                 $get('work_order_number') . '.' .
                 $get('product_name') . '.' .
                 $get('series') . '-' .
                 $get('quantity')
             );
         };
-        
-    $operation = $form->getOperation();
+
+        $operation = $form->getOperation();
         if ($operation === 'create') {
             return $form->schema([
-            Tabs::make('Radni nalog')
-                ->tabs([
-                    Tabs\Tab::make('Osnovno')
-                        ->schema([
-                            Select::make('work_order_number')
-                                ->label('Broj radnog naloga')
-                                ->options([
-                                    '021' => 'naručeno',
-                                    '020' => 'zalihe',
-                                    '022' => 'naručeno i dopunjeno za zalihe',
-                                    '001' => 'prototip kotla/proizvoda',
-                                    '002' => 'rekonstrukcija kotla/proizvoda',
-                                    '003' => 'remont kotla/proizvoda',
-                                    '090' => 'tehnološka proba',
-                                    '100' => 'magacinske rezerve',
-                                    '110' => 'usluga od našeg materijala',
-                                    '111' => 'usluga od materijala naručioca',
-                                    '112' => 'usluga od našeg i materijala kupca',
-                                    '201' => 'pomoćni pribor, alat, naprava za proizvodnju',
-                                    '202' => 'održavanje, remont opreme, dodatna oprema',
-                                    '030' => 'rezervni delovi',
-                                    '050' => 'Dopunski nalog (nedostajuće pozicije-zahtev Šeovac; Škart po RN',
-                                ])
-                                ->required()
-                                // ->reactive()
-                                ->live()
-                                ->afterStateUpdated(fn ($state, $set, $get) => $updateFullName($get, $set)),
+                Tabs::make('Radni nalog')
+                    ->tabs([
+                        Tabs\Tab::make('Osnovno')
+                            ->schema([
+                                Select::make('work_order_number')
+                                    ->label('Broj radnog naloga')
+                                    ->options([
+                                        '021' => 'naručeno',
+                                        '020' => 'zalihe',
+                                        '022' => 'naručeno i dopunjeno za zalihe',
+                                        '001' => 'prototip kotla/proizvoda',
+                                        '002' => 'rekonstrukcija kotla/proizvoda',
+                                        '003' => 'remont kotla/proizvoda',
+                                        '090' => 'tehnološka proba',
+                                        '100' => 'magacinske rezerve',
+                                        '110' => 'usluga od našeg materijala',
+                                        '111' => 'usluga od materijala naručioca',
+                                        '112' => 'usluga od našeg i materijala kupca',
+                                        '201' => 'pomoćni pribor, alat, naprava za proizvodnju',
+                                        '202' => 'održavanje, remont opreme, dodatna oprema',
+                                        '030' => 'rezervni delovi',
+                                        '050' => 'Dopunski nalog (nedostajuće pozicije-zahtev Šeovac; Škart po RN',
+                                    ])
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(fn ($state, $set, $get) => $updateFullName($get, $set)),
 
-                            TextInput::make('series')
-                                ->label('Serija')
-                                // ->integer()
-                                ->required()
-                                // ->reactive()
-                                ->afterStateUpdated(fn ($state, $set, $get) => $updateFullName($get, $set)),
+                                TextInput::make('series')
+                                    ->label('Serija')
+                                    ->required()
+                                    ->afterStateUpdated(fn ($state, $set, $get) => $updateFullName($get, $set)),
 
-                            TextInput::make('quantity')
-                                ->label('Količina')
-                                ->numeric()
-                                ->required()
-                                // ->reactive()
-                                ->afterStateUpdated(fn ($state, $set, $get) => $updateFullName($get, $set)),
+                                TextInput::make('quantity')
+                                    ->label('Količina')
+                                    ->numeric()
+                                    ->required()
+                                    ->afterStateUpdated(fn ($state, $set, $get) => $updateFullName($get, $set)),
 
-                            Hidden::make('user_id')
-                                ->default(fn () => auth()->id()),
+                                Hidden::make('user_id')
+                                    ->default(fn () => auth()->id()),
 
-                            DatePicker::make('launch_date')
-                                ->label('Datum lansiranja')
-                                ->required(),
+                                DatePicker::make('launch_date')
+                                    ->label('Datum lansiranja')
+                                    ->required(),
 
-                            Select::make('product_id')
-                                ->label('Artikal')
-                                ->relationship('product', 'name')
-                                ->preload()
-                                ->required()
-                                ->reactive()
-                                ->live()
-                                ->afterStateUpdated(function ($state, $set, $get) use ($updateFullName) {
-                                    $product = Product::find($state);
-                                    $set('product_name', optional($product)->name);
-                                    $updateFullName($get, $set);
-                                }),
+                                Select::make('product_id')
+                                    ->label('Artikal')
+                                    ->relationship('product', 'name')
+                                    ->preload()
+                                    ->required()
+                                    ->reactive()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, $set, $get) use ($updateFullName) {
+                                        $product = Product::find($state);
+                                        $set('product_name', optional($product)->name);
+                                        $updateFullName($get, $set);
+                                    }),
 
-                            Hidden::make('product_name'),
+                                Hidden::make('product_name'),
 
-                            Hidden::make('full_name'),
+                                Hidden::make('full_name'),
 
-                            Select::make('status')
-                                ->label('Status')
-                                ->options([
-                                    'aktivan' => 'Aktivan',
-                                    'zavrsen' => 'Završen',
-                                    'neaktivan' => 'Neaktivan',
-                                ])
-                                ->default('aktivan')
-                                ->disabled(),
-                        ]),
-                ]),
-        ]);
+                                Select::make('status')
+                                    ->label('Status')
+                                    ->options([
+                                        'aktivan' => 'Aktivan',
+                                        'zavrsen' => 'Završen',
+                                        'neaktivan' => 'Neaktivan',
+                                    ])
+                                    ->default('aktivan')
+                                    ->disabled(),
+                            ]),
+                    ]),
+            ]);
         } else {
             return $form
                 ->schema([
@@ -162,7 +138,7 @@ class WorkOrderResource extends Resource
                             'neaktivan' => 'Neaktivan',
                         ])
                         ->default(fn ($record) => $record->status)
-                        ->visible(fn ($record) => $record?->type === 'custom') // 👈 ovde je razlika
+                        ->visible(fn ($record) => $record?->type === 'custom')
                         ->required(),
 
                     Select::make('status_progresije')
@@ -178,27 +154,34 @@ class WorkOrderResource extends Resource
         }
     }
 
-    /**
-     * The table schema definition for the resource.
-     *
-     * Defines the columns, actions, and bulk actions for the table
-     * display. The columns are: full name, user, product, completion percentage,
-     * launch date, status, and progresija. The actions are: edit, view, delete,
-     * and transfer to warehouse (only visible for completed orders with
-     * confirmed items). The bulk actions are: delete.
-     *
-     * @param  \Filament\Tables\Table  $table
-     * @return \Filament\Tables\Table
-     */
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('full_name')->label('Radni nalog')->searchable()->sortable()->toggleable(),
-                TextColumn::make('user.name')->label('Izdao')->searchable()->sortable()->toggleable(),
-                TextColumn::make('product.name')->label('Artikal')->searchable()->sortable()->toggleable(),
+                TextColumn::make('full_name')
+                    ->label('Radni nalog')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable()
+                    ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
+
+                TextColumn::make('user.name')
+                    ->label('Izdao')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable()
+                    ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
+
+                TextColumn::make('product.name')
+                    ->label('Artikal')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable()
+                    ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
+
                 BadgeColumn::make('completion_percentage')
                     ->label('Procenat izvršenja')
+                    ->getStateUsing(fn (WorkOrder $record) => $record->status === 'zavrsen' ? 100 : $record->completion_percentage)
                     ->colors([
                         'danger' => fn ($state) => $state < 50,
                         'warning' => fn ($state) => $state >= 50 && $state < 80,
@@ -209,13 +192,21 @@ class WorkOrderResource extends Resource
                     ->sortable()
                     ->alignCenter()
                     ->toggleable()
-                    ->searchable(), // ako koristiš kao tekst
-                TextColumn::make('launch_date')->label('Datum lansiranja')->date()->sortable(),
+                    ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
+
+                TextColumn::make('launch_date')
+                    ->label('Datum lansiranja')
+                    ->date()
+                    ->sortable()
+                    ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
+
                 BadgeColumn::make('status')->label('Status')->colors([
                     'aktivan' => 'success',
                     'neaktivan' => 'danger',
                     'zavrsen' => 'warning',
-                ]),
+                ])
+                ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
+
                 BadgeColumn::make('status_progresije')
                     ->label('Progresija')
                     ->color(fn (string $state): string => match ($state) {
@@ -231,71 +222,85 @@ class WorkOrderResource extends Resource
                         default => $state,
                     })
                     ->sortable()
-                    ->toggleable(),
-                ...FilamentColumns::userTrackingColumns(),
+                    ->toggleable()
+                    ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
+
+                ...collect(FilamentColumns::userTrackingColumns())
+                    ->map(function ($column) {
+                        return $column->extraAttributes(fn (WorkOrder $record) =>
+                            $record->isTransferredToWarehouse()
+                                ? ['class' => 'italic font-semibold']
+                                : []
+                        );
+                    })
+                    ->all(),
             ])
             ->actions([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\Action::make('transfer_to_warehouse')
-                        ->label('Transfer u magacin')
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->requiresConfirmation()
-                        ->color('success')
-                        ->visible(fn (WorkOrder $record) =>
-                            $record->status === 'zavrsen' &&
-                            $record->items()->count() > 0 &&
-                            $record->items()->where('is_confirmed', false)->count() === 0 &&
-                            !\App\Models\Warehouse::where('product_id', $record->product_id)
-                                ->where('location', 'Glavno skladište') // Ako imaš default location
-                                ->exists()
-                        )
-                        ->action(function (WorkOrder $record) {
-                            $alreadyTransferred = \App\Models\Warehouse::where('product_id', $record->product_id)
-                                ->where('location', 'Glavno skladište') // Ako koristiš `location` kao unique deo
-                                ->exists();
+                Tables\Actions\EditAction::make()
+                    ->visible(fn (WorkOrder $record) => !$record->isTransferredToWarehouse()),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('transfer_to_warehouse')
+                    ->label('Transfer u magacin')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->requiresConfirmation()
+                    ->color('success')
+                    ->visible(fn (WorkOrder $record) =>
+                        $record->status === 'zavrsen' &&
+                        $record->items()->count() > 0 &&
+                        $record->items()->where('is_confirmed', false)->count() === 0 &&
+                        !$record->isTransferredToWarehouse()
+                    )
+                    ->action(function (WorkOrder $record) {
+                        $productId = $record->product_id;
+                        $location = 'Seovac';
 
-                            if ($alreadyTransferred) {
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Već prebačeno')
-                                    ->body("Ovaj proizvod je već prebačen u magacin.")
-                                    ->warning()
-                                    ->send();
-                                return;
-                            }
+                        // Prvo tražimo red sa statusom NA_CEKANJU
+                        $pending = \App\Models\Warehouse::where('product_id', $productId)
+                            ->where('location', $location)
+                            ->where('status', 'na_cekanju')
+                            ->first();
 
+                        if ($pending) {
+                            $pending->increment('quantity', $record->quantity);
+                        } else {
+                            // Ako nema sa statusom na_cekanju, uvek pravimo novi red
                             \App\Models\Warehouse::create([
-                                'product_id' => $record->product_id,
+                                'product_id' => $productId,
                                 'quantity' => $record->quantity,
-                                'location' => 'Glavno skladište', // obavezno ako je deo unique ključa
+                                'location' => $location,
+                                'status' => 'na_cekanju',
                                 'created_by' => auth()->id(),
                                 'updated_by' => auth()->id(),
                             ]);
+                        }
 
-                            $record->updateStatusBasedOnItems();
+                        $record->is_transferred_to_warehouse = true;
+                        $record->save();
+                        $record->updateStatusBasedOnItems();
 
-                            \Filament\Notifications\Notification::make()
-                                ->title('Uspešno')
-                                ->body("Radni nalog je uspešno prebačen u magacin.")
-                                ->success()
-                                ->send();
-                        }),
-                ])
+                        \Filament\Notifications\Notification::make()
+                            ->title('Uspešno')
+                            ->body('Radni nalog je uspešno prebačen u magacin.')
+                            ->success()
+                            ->send();
+                    }),
+
+                Tables\Actions\Action::make('already_transferred')
+                    ->label('Prebačeno u magacin')
+                    ->disabled()
+                    ->color('gray')
+                    ->visible(fn (WorkOrder $record) => $record->isTransferredToWarehouse()),
+            ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ])
             ->defaultSort('status', 'desc')
             ->searchDebounce(500)
             ->recordUrl(fn (WorkOrder $record) => static::getUrl('edit', ['record' => $record]))
-            ->recordAction(null); // spriječava otvaranje modala i koristi URL
+            ->recordAction(null);
     }
 
-    /**
-     * Get the relation managers that should be available for the resource.
-     *
-     * @return array
-     */
     public static function getRelations(): array
     {
         return [
@@ -303,13 +308,6 @@ class WorkOrderResource extends Resource
         ];
     }
 
-    /**
-     * The pages that should be available for the resource.
-     *
-     * The pages are: edit, index, create, custom-create, and view.
-     *
-     * @return array
-     */
     public static function getPages(): array
     {
         return [

@@ -21,7 +21,7 @@ class WorkOrder extends Model
         'command_in_series',
         'launch_date',
         'quantity',
-        'type', // ✅ Dodato
+        'type',
         'status',
         'status_progresije',
         'created_by',
@@ -57,7 +57,7 @@ class WorkOrder extends Model
     protected function generateFullName(): void
     {
         if ($this->type === 'custom') {
-            return; // ✅ Ne diramo, korisnik unosi ručno
+            return;
         }
 
         $product = $this->product ?? $this->load('product')->product;
@@ -209,5 +209,15 @@ class WorkOrder extends Model
     public function getProductCodeAttribute()
     {
         return $this->product?->code;
+    }
+
+    /**
+     * Check if the work order is already transferred to the warehouse.
+     *
+     * @return bool
+     */
+    public function isTransferredToWarehouse(): bool
+    {
+        return $this->is_transferred_to_warehouse;
     }
 }

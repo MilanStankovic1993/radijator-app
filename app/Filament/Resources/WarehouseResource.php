@@ -72,6 +72,21 @@ class WarehouseResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label('Status')
+                    ->colors([
+                        'na_cekanju' => 'warning',
+                        'na_stanju' => 'success',
+                        'izdato' => 'danger',
+                    ])
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'na_cekanju' => 'Na čekanju',
+                        'na_stanju' => 'Na stanju',
+                        'izdato' => 'Izdato',
+                        default => ucfirst($state),
+                    })
+                    ->sortable()
+                    ->toggleable(),
                 ...FilamentColumns::userTrackingColumns(),
             ])
             ->filters([
@@ -82,6 +97,13 @@ class WarehouseResource extends Resource
                             ->pluck('name', 'id')
                     ),
 
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'na_cekanju' => 'Na čekanju',
+                        'na_stanju' => 'Na stanju',
+                        'izdato' => 'Izdato',
+                    ]),
                 Tables\Filters\Filter::make('created_today')
                     ->label('Uneto danas')
                     ->query(fn (Builder $query) => $query->whereDate('created_at', now()->toDateString())),
@@ -93,6 +115,95 @@ class WarehouseResource extends Resource
                     ),
             ])
             ->actions([
+                Tables\Actions\Action::make('accept_stock')
+                    ->label('Prihvati na zalihe')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (Warehouse $record) => $record->isPending())
+                    ->form([
+                        Forms\Components\TextInput::make('accepted_quantity')
+                            ->label('Količina za prijem')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(fn (Warehouse $record) => $record->quantity)
+                            ->required(),
+                    ])
+                    ->action(function (array $data, Warehouse $record) {
+                        $quantityToAccept = (int) $data['accepted_quantity'];
+
+                        // Smanji količinu iz zapisa koji je na čekanju
+                        $record->decrement('quantity', $quantityToAccept);
+
+                        // Ako je količina pala na 0, obriši red
+                        if ($record->quantity <= 0) {
+                            $record->delete();
+                        }
+
+                        // Povećaj količinu u 'na_stanju' ako postoji
+                        $existing = Warehouse::where('product_id', $record->product_id)
+                            ->where('location', $record->location)
+                            ->where('status', Warehouse::STATUS_NA_STANJU)
+                            ->first();
+
+                        if ($existing) {
+                            $existing->increment('quantity', $quantityToAccept);
+                        } else {
+                            Warehouse::create([
+                                'product_id' => $record->product_id,
+                                'location' => $record->location,
+                                'status' => Warehouse::STATUS_NA_STANJU,
+                                'quantity' => $quantityToAccept,
+                                'created_by' => auth()->id(),
+                                'updated_by' => auth()->id(),
+                            ]);
+                        }
+                    }),
+
+                Tables\Actions\Action::make('issue_stock')
+                    ->label('Izdaj robu')
+                    ->icon('heroicon-o-truck')
+                    ->color('danger')
+                    ->visible(fn (Warehouse $record) => $record->isAvailable())
+                    ->form([
+                        Forms\Components\TextInput::make('issue_quantity')
+                            ->label('Količina za izdavanje')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(fn (Warehouse $record) => $record->quantity)
+                            ->required(),
+                    ])
+                    ->action(function (array $data, Warehouse $record) {
+                        $quantityToIssue = (int) $data['issue_quantity'];
+
+                        // Pronađi 'izdato' red (mora pre update-a)
+                        $issued = Warehouse::where('product_id', $record->product_id)
+                            ->where('location', $record->location)
+                            ->where('status', Warehouse::STATUS_IZDATO)
+                            ->first();
+
+                        // Ako postoji 'izdato', dodaj količinu
+                        if ($issued) {
+                            $issued->increment('quantity', $quantityToIssue);
+                        } else {
+                            Warehouse::create([
+                                'product_id' => $record->product_id,
+                                'location' => $record->location,
+                                'status' => Warehouse::STATUS_IZDATO,
+                                'quantity' => $quantityToIssue,
+                                'created_by' => auth()->id(),
+                                'updated_by' => auth()->id(),
+                            ]);
+                        }
+
+                        // Smanji količinu
+                        $record->decrement('quantity', $quantityToIssue);
+
+                        // Ako nema više na stanju, briši red
+                        if ($record->quantity <= 0) {
+                            $record->delete();
+                        }
+                    }),
+
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

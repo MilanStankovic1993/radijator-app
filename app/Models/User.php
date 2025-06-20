@@ -43,7 +43,6 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        \Log::info('=== Provera pristupa panelu: ' . $panel->getId() . ' ===');
         return true;
     }
 

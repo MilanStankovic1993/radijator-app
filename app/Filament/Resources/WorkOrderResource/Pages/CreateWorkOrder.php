@@ -8,6 +8,9 @@ use App\Models\WorkPhase;
 use App\Models\Product;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Validation\ValidationException;
+use App\Models\WorkOrder;
+use Filament\Notifications\Notification;
 
 class CreateWorkOrder extends CreateRecord
 {
@@ -21,6 +24,27 @@ class CreateWorkOrder extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function beforeCreate(): void
+    {
+        $data = $this->data;
+
+        $exists = WorkOrder::where('product_id', $data['product_id'] ?? null)
+            ->where('work_order_number', $data['work_order_number'] ?? null)
+            ->where('series', $data['series'] ?? null)
+            ->where('quantity', $data['quantity'] ?? null)
+            ->exists();
+
+        if ($exists) {
+            \Filament\Notifications\Notification::make()
+                ->title('Greška')
+                ->body('Radni nalog već postoji, molimo vas promenite seriju radnog naloga.')
+                ->danger()
+                ->send();
+
+            $this->halt();
+        }
     }
 
     /**

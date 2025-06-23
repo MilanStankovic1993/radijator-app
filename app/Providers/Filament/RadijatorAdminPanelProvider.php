@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\ArchivedWorkOrderResource;
+use App\Filament\Resources\WorkOrderResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -28,10 +30,14 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ->path('radijator_admin')
             ->login()
             ->brandName('Radijator Inženjering')
-            ->brandLogo(asset('images/logo.png', true)) // forsira https
+            ->brandLogo(asset('images/logo.png', true))
+            ->maxContentWidth('full')
             ->databaseNotifications()
             ->colors([
                 'primary' => Color::Amber,
+            ])
+            ->resources([
+                ArchivedWorkOrderResource::class,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

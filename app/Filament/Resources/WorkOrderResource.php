@@ -45,7 +45,7 @@ class WorkOrderResource extends Resource
             $set('full_name',
                 $get('work_order_number') . '.' .
                 $get('product_name') . '.' .
-                $get('series') . '-' .
+                $get('series') . '.' .
                 $get('quantity')
             );
         };
@@ -83,6 +83,7 @@ class WorkOrderResource extends Resource
                                 TextInput::make('series')
                                     ->label('Serija')
                                     ->required()
+                                    ->validationAttribute('Serija')
                                     ->afterStateUpdated(fn ($state, $set, $get) => $updateFullName($get, $set)),
 
                                 TextInput::make('quantity')
@@ -167,22 +168,8 @@ class WorkOrderResource extends Resource
                     ->toggleable()
                     ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
 
-                TextColumn::make('user.name')
-                    ->label('Izdao')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable()
-                    ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
-
-                TextColumn::make('product.name')
-                    ->label('Artikal')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable()
-                    ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
-
                 BadgeColumn::make('completion_percentage')
-                    ->label('Procenat izvršenja')
+                    ->label('%')
                     ->getStateUsing(fn (WorkOrder $record) => $record->status === 'zavrsen' ? 100 : $record->completion_percentage)
                     ->colors([
                         'danger' => fn ($state) => $state < 50,
@@ -239,19 +226,25 @@ class WorkOrderResource extends Resource
 
                 ...collect(FilamentColumns::userTrackingColumns())
                     ->map(function ($column) {
-                        return $column->extraAttributes(fn (WorkOrder $record) =>
-                            $record->isTransferredToWarehouse()
-                                ? ['class' => 'italic font-semibold']
-                                : []
-                        );
+                        return $column
+                            ->extraAttributes(fn (WorkOrder $record) =>
+                                $record->isTransferredToWarehouse()
+                                    ? ['class' => 'italic font-semibold']
+                                    : []
+                            )
+                            ->toggleable(true);
                     })
                     ->all(),
             ])
-            ->actions([
+        ->actions([
+            Tables\Actions\ActionGroup::make([
                 Tables\Actions\EditAction::make()
                     ->visible(fn (WorkOrder $record) => !$record->isTransferredToWarehouse()),
+
                 Tables\Actions\ViewAction::make(),
+
                 Tables\Actions\DeleteAction::make(),
+
                 Tables\Actions\Action::make('transfer_to_warehouse')
                     ->label('Transfer u magacin')
                     ->icon('heroicon-o-arrow-down-tray')
@@ -267,7 +260,6 @@ class WorkOrderResource extends Resource
                         $productId = $record->product_id;
                         $location = 'Seovac';
 
-                        // Prvo tražimo red sa statusom NA_CEKANJU
                         $pending = \App\Models\Warehouse::where('product_id', $productId)
                             ->where('location', $location)
                             ->where('status', 'na_cekanju')
@@ -276,7 +268,6 @@ class WorkOrderResource extends Resource
                         if ($pending) {
                             $pending->increment('quantity', $record->quantity);
                         } else {
-                            // Ako nema sa statusom na_cekanju, uvek pravimo novi red
                             \App\Models\Warehouse::create([
                                 'product_id' => $productId,
                                 'quantity' => $record->quantity,
@@ -303,7 +294,8 @@ class WorkOrderResource extends Resource
                     ->disabled()
                     ->color('gray')
                     ->visible(fn (WorkOrder $record) => $record->isTransferredToWarehouse()),
-            ])
+            ]),
+        ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ])
@@ -349,14 +341,6 @@ class WorkOrderResource extends Resource
                     ])
                     ->placeholder('Svi statusi'),
 
-                TernaryFilter::make('show_zavrseni')
-                    ->label('Prikaži završene')
-                    ->default(false)
-                    ->queries(
-                        true: fn ($query) => $query,
-                        false: fn ($query) => $query->where('status', '!=', 'zavrsen'),
-                        blank: fn ($query) => $query->where('status', '!=', 'zavrsen'),
-                    ),
                 // Filter po progresiji
                 Tables\Filters\SelectFilter::make('status_progresije')
                     ->label('Status progresije')
@@ -371,6 +355,19 @@ class WorkOrderResource extends Resource
             ->searchDebounce(500)
             ->recordUrl(fn (WorkOrder $record) => static::getUrl('edit', ['record' => $record]))
             ->recordAction(null);
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->where(function ($query) {
+                $query->where('status', '!=', 'zavrsen')
+                    ->orWhere(function ($query) {
+                        $query->where('is_transferred_to_warehouse', false)
+                            ->orWhereNull('is_transferred_to_warehouse');
+                    })
+                    ->where('type', '!=', 'custom');
+            });
     }
 
     public static function getRelations(): array

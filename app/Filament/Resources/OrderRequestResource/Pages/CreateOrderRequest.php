@@ -28,6 +28,26 @@ class CreateOrderRequest extends CreateRecord
             }
         }
     }
+    protected function afterCreate(): void
+    {
+        if (! isset($this->data['items']) || ! is_array($this->data['items'])) {
+            return;
+        }
+
+        $groupedItems = collect($this->data['items'])
+            ->groupBy('product_id')
+            ->map(function ($group) {
+                return [
+                    'product_id' => $group->first()['product_id'],
+                    'quantity' => $group->sum('quantity'),
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        // Dodeliti grupisane stavke
+        $this->record->items()->createMany($groupedItems);
+    }
 
     protected function getRedirectUrl(): string
     {

@@ -80,7 +80,7 @@ class OrderRequestResource extends Resource
                             ->columnSpan(4), // 4 od 12 => 33.3%
                     ]),
                 ])
-                ->grid(3) // Ovde određujemo broj kolona u redu (npr. 3 stavke po redu)
+                ->grid(3)
                 ->columns(3)
                 ->defaultItems(1)
                 ->minItems(1)

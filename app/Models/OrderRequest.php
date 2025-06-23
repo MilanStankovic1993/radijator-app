@@ -12,9 +12,14 @@ class OrderRequest extends Model
     use HasUserTracking;
 
     use HasCommonFeatures;
-    protected $fillable = ['customer_id', 'customer_name', 'status',
+    protected $fillable = [
+        'order_code',
+        'customer_id',
+        'customer_name', 
+        'status',
         'created_by',
-        'updated_by'];
+        'updated_by'
+    ];
 
     public function items(): HasMany
     {

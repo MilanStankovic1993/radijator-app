@@ -62,4 +62,18 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(Activity::class, 'causer_id')->latest();
     }
+    // Zadaci koje je korisnik dobio
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class)
+            ->withPivot('is_read', 'is_done')
+            ->withTimestamps();
+    }
+
+    // Zadaci koje je korisnik kreirao
+    public function createdTasks()
+    {
+        return $this->hasMany(Task::class, 'creator_id');
+    }
+
 }

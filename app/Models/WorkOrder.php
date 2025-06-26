@@ -20,6 +20,8 @@ class WorkOrder extends Model
         'series',
         'command_in_series',
         'launch_date',
+        'transferred_count',
+        'ready_to_transfer_count',
         'quantity',
         'type',
         'status',
@@ -62,7 +64,7 @@ class WorkOrder extends Model
 
         $product = $this->product ?? $this->load('product')->product;
         $name = $product?->name ?? 'NO-NAME';
-        $this->full_name = "{$this->work_order_number}.{$name}.{$this->series}-{$this->quantity}";
+        $this->full_name = "{$this->work_order_number}.{$name}.{$this->series}.{$this->quantity}";
     }
 
     // Relations
@@ -87,6 +89,21 @@ class WorkOrder extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function recalculateTransferCounts(): void
+    {
+        $this->loadMissing('items');
+
+        $this->transferred_count = $this->items->sum('transferred_count');
+        $this->ready_to_transfer_count = $this->items->min(function ($item) {
+            return floor($item->total_completed);
+        }) - $this->transferred_count;
+
+        if ($this->ready_to_transfer_count < 0) {
+            $this->ready_to_transfer_count = 0;
+        }
+
+        $this->save();
+    }
     /**
      * Returns the user associated with this work order.
      *

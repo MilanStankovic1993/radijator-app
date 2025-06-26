@@ -153,6 +153,18 @@ class WorkOrderResource extends Resource
                         ])
                         ->default('aktivan')
                         ->required(),
+
+                    // TextInput::make('ready_to_transfer_count')
+                    //     ->label('Spremno za transfer (kom)')
+                    //     ->default(fn ($record) => $record?->ready_to_transfer_count ?? 0)
+                    //     ->disabled()
+                    //     ->dehydrated(false),
+
+                    TextInput::make('transferred_count')
+                        ->label('Prebačeno u magacin (kom)')
+                        ->default(fn ($record) => $record?->transferred_count ?? 0)
+                        ->disabled()
+                        ->dehydrated(false),
                 ]);
         }
     }
@@ -187,6 +199,16 @@ class WorkOrderResource extends Resource
                     ->date()
                     ->sortable()
                     ->extraAttributes(fn (WorkOrder $record) => $record->isTransferredToWarehouse() ? ['class' => 'italic font-semibold'] : []),
+
+                TextColumn::make('ready_to_transfer_count')
+                    ->label('Spremno za transfer')
+                    ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('transferred_count')
+                    ->label('Prebačeno')
+                    ->sortable()
+                    ->toggleable(),
 
                 BadgeColumn::make('status')
                     ->label('Status')
@@ -236,66 +258,101 @@ class WorkOrderResource extends Resource
                     })
                     ->all(),
             ])
-        ->actions([
-            Tables\Actions\ActionGroup::make([
-                Tables\Actions\EditAction::make()
-                    ->visible(fn (WorkOrder $record) => !$record->isTransferredToWarehouse()),
+            ->actions([
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (WorkOrder $record) => !$record->isTransferredToWarehouse()),
 
-                Tables\Actions\ViewAction::make(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\DeleteAction::make(),
 
-                Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\Action::make('transfer_to_warehouse')
+                        ->label('Transfer u magacin')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->requiresConfirmation()
+                        ->color('success')
+                        ->visible(fn (WorkOrder $record) =>
+                            $record->ready_to_transfer_count > 0 &&
+                            !$record->isTransferredToWarehouse()
+                        )
+                        ->form(fn (WorkOrder $record) => [
+                            Forms\Components\Repeater::make('items')
+                                ->label('Unesi kodove za ' . $record->ready_to_transfer_count . ' jedinica')
+                                ->schema([
+                                    Forms\Components\TextInput::make('code')
+                                        ->label('Kod')
+                                        ->required()
+                                        ->unique(table: \App\Models\WarehouseItem::class, column: 'code'),
+                                ])
+                                ->minItems($record->ready_to_transfer_count)
+                                ->maxItems($record->ready_to_transfer_count)
+                                ->default(fn () => array_fill(0, $record->ready_to_transfer_count, ['code' => '']))
+                                ->disableItemDeletion()
+                                ->disableItemCreation()
+                                ->columns(1),
+                        ])
+                        ->action(function (array $data, WorkOrder $record) {
+                            $productId = $record->product_id;
+                            $location = 'Seovac';
 
-                Tables\Actions\Action::make('transfer_to_warehouse')
-                    ->label('Transfer u magacin')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->requiresConfirmation()
-                    ->color('success')
-                    ->visible(fn (WorkOrder $record) =>
-                        $record->status === 'zavrsen' &&
-                        $record->items()->count() > 0 &&
-                        $record->items()->where('is_confirmed', false)->count() === 0 &&
-                        !$record->isTransferredToWarehouse()
-                    )
-                    ->action(function (WorkOrder $record) {
-                        $productId = $record->product_id;
-                        $location = 'Seovac';
-
-                        $pending = \App\Models\Warehouse::where('product_id', $productId)
-                            ->where('location', $location)
-                            ->where('status', 'na_cekanju')
-                            ->first();
-
-                        if ($pending) {
-                            $pending->increment('quantity', $record->quantity);
-                        } else {
-                            \App\Models\Warehouse::create([
+                            $warehouse = \App\Models\Warehouse::firstOrCreate([
                                 'product_id' => $productId,
-                                'quantity' => $record->quantity,
                                 'location' => $location,
                                 'status' => 'na_cekanju',
+                            ], [
+                                'quantity' => 0,
                                 'created_by' => auth()->id(),
                                 'updated_by' => auth()->id(),
                             ]);
-                        }
 
-                        $record->is_transferred_to_warehouse = true;
-                        $record->save();
-                        $record->updateStatusBasedOnItems();
+                            $codeIndex = 0;
+                            $totalTransferred = 0;
 
-                        \Filament\Notifications\Notification::make()
-                            ->title('Uspešno')
-                            ->body('Radni nalog je uspešno prebačen u magacin.')
-                            ->success()
-                            ->send();
-                    }),
+                            foreach ($record->items as $item) {
+                                $count = $item->ready_to_transfer_count;
+                                if ($count <= 0) {
+                                    continue;
+                                }
 
-                Tables\Actions\Action::make('already_transferred')
-                    ->label('Prebačeno u magacin')
-                    ->disabled()
-                    ->color('gray')
-                    ->visible(fn (WorkOrder $record) => $record->isTransferredToWarehouse()),
-            ]),
-        ])
+                                for ($i = 0; $i < $count; $i++) {
+                                    \App\Models\WarehouseItem::create([
+                                        'warehouse_id' => $warehouse->id,
+                                        'product_id' => $productId,
+                                        'work_order_id' => $record->id,
+                                        'location' => $location,
+                                        'status' => 'na_cekanju',
+                                        'code' => $data['items'][$codeIndex]['code'],
+                                        'quantity' => 1,
+                                        'created_by' => auth()->id(),
+                                        'updated_by' => auth()->id(),
+                                    ]);
+                                    $codeIndex++;
+                                    $totalTransferred++;
+                                }
+
+                                $item->increment('transferred_count', $count);
+                                $item->save();
+                            }
+
+                            $warehouse->increment('quantity', $totalTransferred);
+                            $record->is_transferred_to_warehouse = true;
+                            $record->save();
+                            $record->updateStatusBasedOnItems();
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Uspešno')
+                                ->body("Prebačeno $totalTransferred komada u magacin.")
+                                ->success()
+                                ->send();
+                        }),
+
+                    Tables\Actions\Action::make('already_transferred')
+                        ->label('Prebačeno u magacin')
+                        ->disabled()
+                        ->color('gray')
+                        ->visible(fn (WorkOrder $record) => $record->isTransferredToWarehouse()),
+                ]),
+            ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ])

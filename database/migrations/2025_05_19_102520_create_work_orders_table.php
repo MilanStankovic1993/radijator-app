@@ -21,6 +21,9 @@ return new class extends Migration
             $table->string('work_order_number', 255)->nullable();
             $table->string('series', 255)->nullable();         // serija
             $table->unsignedInteger('quantity');
+            
+            $table->integer('transferred_count')->default(0);
+            $table->integer('ready_to_transfer_count')->default(0);
 
 
             $table->date('launch_date');

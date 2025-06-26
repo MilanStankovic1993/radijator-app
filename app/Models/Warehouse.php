@@ -33,6 +33,10 @@ class Warehouse extends Model
             self::STATUS_IZDATO => 'Izdato',
         ];
     }
+    public function items()
+    {
+        return $this->hasMany(WarehouseItem::class);
+    }
 
     public function product()
     {

@@ -98,7 +98,7 @@ class TaskResource extends Resource
                     })
                     ->markdown(),
 
-                TextColumn::make('description')->label('Opis')->limit(50),
+                // TextColumn::make('description')->label('Opis')->limit(50),
 
                 ToggleColumn::make('pivot.is_done')
                     ->label('Odradio?')

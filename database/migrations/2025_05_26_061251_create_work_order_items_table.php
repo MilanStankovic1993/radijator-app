@@ -10,13 +10,11 @@ return new class extends Migration {
         Schema::create('work_order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('work_order_id')->constrained()->onDelete('cascade');
-            // $table->string('code')->nullable(); // šifra proizvoda, ako postoji
             $table->unsignedBigInteger('work_phase_id')->nullable();
             $table->unsignedBigInteger('product_id')->nullable();
             $table->boolean('is_confirmed')->default(false);
             $table->integer('required_to_complete')->nullable();// potrebno da odradi (npr. sati ili min)
-            $table->integer('total_completed')->nullable();// ukupno odradjeno (npr. sati ili min)
-            // $table->string('status')->default('pending');
+            $table->float('total_completed')->default(0);// ukupno odradjeno (npr. sati ili min)
             
             $table->unsignedBigInteger('created_by')->nullable(); // korisnik koji je kreirao
             $table->unsignedBigInteger('updated_by')->nullable(); // korisnik koji je izmenio

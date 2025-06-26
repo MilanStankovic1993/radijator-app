@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\HasCommonFeatures;
 use App\Traits\HasUserTracking;
 
 class WorkOrderItem extends Model
@@ -17,8 +15,10 @@ class WorkOrderItem extends Model
         'product_id',
         'required_to_complete',
         'total_completed',
+        'transferred_count',
         'is_confirmed',
     ];
+
     protected $casts = [
         'total_completed' => 'float',
     ];
@@ -27,31 +27,26 @@ class WorkOrderItem extends Model
         'total_completed' => 0,
     ];
 
+    protected $appends = ['ready_to_transfer_count'];
+
     protected static function booted()
     {
         static::saved(function ($item) {
             $item->workOrder?->updateStatusBasedOnItems();
-            $item->workOrder?->recalculateTransferCounts(); // <-- poziva update polja
+            $item->workOrder?->checkIfFullyTransferredAndUpdate();
         });
 
         static::deleted(function ($item) {
             $item->workOrder?->updateStatusBasedOnItems();
-            $item->workOrder?->recalculateTransferCounts(); // <-- poziva update polja
+            $item->workOrder?->checkIfFullyTransferredAndUpdate();
         });
     }
-    public function workOrder()
-    {
-        return $this->belongsTo(WorkOrder::class);
-    }
+    public function workOrder() { return $this->belongsTo(WorkOrder::class); }
+    public function workPhase() { return $this->belongsTo(WorkPhase::class); }
+    public function product() { return $this->belongsTo(Product::class); }
 
-    public function workPhase()
+    public function getReadyToTransferCountAttribute(): int
     {
-        return $this->belongsTo(WorkPhase::class);
-    }
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
+        return max(floor($this->total_completed) - $this->transferred_count, 0);
     }
 }
-

@@ -153,18 +153,6 @@ class WorkOrderResource extends Resource
                         ])
                         ->default('aktivan')
                         ->required(),
-
-                    // TextInput::make('ready_to_transfer_count')
-                    //     ->label('Spremno za transfer (kom)')
-                    //     ->default(fn ($record) => $record?->ready_to_transfer_count ?? 0)
-                    //     ->disabled()
-                    //     ->dehydrated(false),
-
-                    TextInput::make('transferred_count')
-                        ->label('Prebačeno u magacin (kom)')
-                        ->default(fn ($record) => $record?->transferred_count ?? 0)
-                        ->disabled()
-                        ->dehydrated(false),
                 ]);
         }
     }
@@ -309,12 +297,17 @@ class WorkOrderResource extends Resource
                             $totalTransferred = 0;
 
                             foreach ($record->items as $item) {
-                                $count = $item->ready_to_transfer_count;
-                                if ($count <= 0) {
+                                $readyCount = floor($item->total_completed) - $item->transferred_count;
+
+                                if ($readyCount <= 0) {
                                     continue;
                                 }
 
-                                for ($i = 0; $i < $count; $i++) {
+                                for ($i = 0; $i < $readyCount; $i++) {
+                                    if (!isset($data['items'][$codeIndex]['code'])) {
+                                        continue;
+                                    }
+
                                     \App\Models\WarehouseItem::create([
                                         'warehouse_id' => $warehouse->id,
                                         'product_id' => $productId,
@@ -326,17 +319,17 @@ class WorkOrderResource extends Resource
                                         'created_by' => auth()->id(),
                                         'updated_by' => auth()->id(),
                                     ]);
+
                                     $codeIndex++;
                                     $totalTransferred++;
                                 }
 
-                                $item->increment('transferred_count', $count);
+                                $item->increment('transferred_count', $readyCount);
                                 $item->save();
                             }
 
                             $warehouse->increment('quantity', $totalTransferred);
-                            $record->is_transferred_to_warehouse = true;
-                            $record->save();
+                            $record->checkIfFullyTransferredAndUpdate();
                             $record->updateStatusBasedOnItems();
 
                             \Filament\Notifications\Notification::make()
@@ -417,6 +410,7 @@ class WorkOrderResource extends Resource
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         return parent::getEloquentQuery()
+            ->with('items')
             ->where(function ($query) {
                 $query->where('status', '!=', 'zavrsen')
                     ->orWhere(function ($query) {

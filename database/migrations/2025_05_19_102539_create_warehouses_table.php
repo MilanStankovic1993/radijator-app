@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('location', 100)->default('Seovac');
             $table->unsignedInteger('quantity')->default(0);
+            $table->string('status')->default('na_cekanju');
             $table->decimal('reserved_quantity', 10, 2)->default(0)->comment('Rezervisana količina');
             $table->decimal('minimum_stock', 10, 2)->default(0)->comment('Minimalna zaliha');
             

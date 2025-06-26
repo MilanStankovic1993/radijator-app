@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('work_order_id')->nullable()->constrained();
             $table->string('location');
             $table->string('status')->default('na_cekanju');
-            $table->string('code')->unique();
+            $table->string('code')->nullable()->unique();
             $table->unsignedInteger('quantity')->default(1);
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');

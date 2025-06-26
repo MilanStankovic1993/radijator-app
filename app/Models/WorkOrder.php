@@ -20,8 +20,6 @@ class WorkOrder extends Model
         'series',
         'command_in_series',
         'launch_date',
-        'transferred_count',
-        'ready_to_transfer_count',
         'quantity',
         'type',
         'status',
@@ -30,13 +28,8 @@ class WorkOrder extends Model
         'updated_by',
     ];
 
-    /**
-     * Register model event bindings.
-     *
-     * This method is called when the model is booted. The model is booted
-     * automatically by Eloquent when it's being used. The boot method is a
-     * convenient place to register model event bindings.
-     */
+    protected $appends = ['transferred_count', 'ready_to_transfer_count'];
+
     protected static function booted()
     {
         static::creating(function ($model) {
@@ -48,14 +41,6 @@ class WorkOrder extends Model
         });
     }
 
-    /**
-     * Generates the full name for the work order, based on type.
-     *
-     * If the type is 'custom', the full name is not generated.
-     *
-     * Otherwise, the full name is generated in the following format:
-     * WorkOrderNumber.ProductName.Series-Quantity
-     */
     protected function generateFullName(): void
     {
         if ($this->type === 'custom') {
@@ -67,107 +52,22 @@ class WorkOrder extends Model
         $this->full_name = "{$this->work_order_number}.{$name}.{$this->series}.{$this->quantity}";
     }
 
-    // Relations
+    public function orderRequest() { return $this->belongsTo(OrderRequest::class); }
+    public function product() { return $this->belongsTo(Product::class); }
+    public function user() { return $this->belongsTo(User::class); }
+    public function items() { return $this->hasMany(WorkOrderItem::class, 'work_order_id'); }
+    public function workPhase() { return $this->belongsTo(WorkPhase::class); }
 
-    /**
-     * Returns the order request which this work order is a part of.
-     *
-     * @return BelongsTo
-     */
-    public function orderRequest()
-    {
-        return $this->belongsTo(OrderRequest::class);
-    }
-
-    /**
-     * Returns the product which this work order is for.
-     *
-     * @return BelongsTo
-     */
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function recalculateTransferCounts(): void
-    {
-        $this->loadMissing('items');
-
-        $this->transferred_count = $this->items->sum('transferred_count');
-        $this->ready_to_transfer_count = $this->items->min(function ($item) {
-            return floor($item->total_completed);
-        }) - $this->transferred_count;
-
-        if ($this->ready_to_transfer_count < 0) {
-            $this->ready_to_transfer_count = 0;
-        }
-
-        $this->save();
-    }
-    /**
-     * Returns the user associated with this work order.
-     *
-     * @return BelongsTo
-     */
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Returns the work order items associated with this work order.
-     *
-     * Work order items are individual items which are a part of the work order.
-     * They are used to track the production of the work order.
-     *
-     * @return HasMany
-     */
-    public function items()
-    {
-        return $this->hasMany(WorkOrderItem::class, 'work_order_id');
-    }
-
-    /**
-     * Returns the work phase which this work order is a part of.
-     *
-     * Work phases are individual phases of production which are a part of the
-     * production process. Each work order is associated with a single work phase.
-     *
-     * @return BelongsTo
-     */
-    public function workPhase()
-    {
-        return $this->belongsTo(WorkPhase::class);
-    }
-
-    /**
-     * Get the eloquent query for the work order model.
-     *
-     * By default, the query will include all work order items.
-     *
-     * @return Builder
-     */
     public static function getEloquentQuery(): Builder
     {
         return parent::query()->with('items');
     }
 
-    /**
-     * Update the status of this work order based on the status of its items.
-     *
-     * The status of the work order will be set to one of the following:
-     *  - 'zavrsen' if all items are confirmed.
-     *  - 'u_toku' if any item has a total_completed greater than 0.
-     *  - 'aktivan' if none of the above conditions are met.
-     */
     public function updateStatusBasedOnItems(): void
     {
         $items = $this->items()->get();
 
-        if ($items->isEmpty()) {
-            return;
-        }
+        if ($items->isEmpty()) return;
 
         if ($items->every(fn ($item) => $item->is_confirmed)) {
             $this->status = 'zavrsen';
@@ -179,18 +79,36 @@ class WorkOrder extends Model
 
         $this->save();
     }
-    
-    /**
-     * Calculate the completion percentage for this work order.
-     *
-     * This method iterates over all work order items associated with
-     * this work order and sums up the total required time and total
-     * completed time. The completion percentage is then calculated
-     * by dividing the total completed time by the total required time
-     * and multiplying by 100.
-     *
-     * @return float
-     */
+
+    public function getTransferredCountAttribute(): int
+    {
+        return \App\Models\WarehouseItem::where('work_order_id', $this->id)
+            ->whereIn('status', ['na_cekanju', 'aktivno'])
+            ->count();
+    }
+
+    public function getReadyToTransferCountAttribute(): int
+    {
+        $itemCounts = $this->items->map(function ($item) {
+            return floor($item->total_completed) - $item->transferred_count;
+        });
+
+        return $itemCounts->isEmpty() ? 0 : max(0, $itemCounts->min());
+    }
+
+    public function checkIfFullyTransferredAndUpdate(): void
+    {
+        $transferred = $this->getTransferredCountAttribute(); // koliko je otišlo u magacin
+        $ready = $this->getReadyToTransferCountAttribute();   // koliko još čeka
+
+        // Ako ništa više ne čeka i sve je prebačeno
+        if ($transferred >= $this->quantity && $ready === 0) {
+            $this->is_transferred_to_warehouse = true;
+            $this->status = 'zavrsen';
+            $this->save();
+        }
+    }
+
     public function getCompletionPercentageAttribute(): float
     {
         $totalRequiredTime = 0;
@@ -198,43 +116,17 @@ class WorkOrder extends Model
 
         foreach ($this->items as $item) {
             $workPhase = $item->workPhase;
+            if (!$workPhase || $workPhase->time_norm === null) continue;
 
-            if (!$workPhase || $workPhase->time_norm === null) {
-                continue;
-            }
-
-            $timeNorm = $workPhase->time_norm;
             $required = $item->required_to_complete ?? 0;
             $completed = $item->total_completed ?? 0;
-
-            $totalRequiredTime += $required * $timeNorm;
-            $totalCompletedTime += $completed * $timeNorm;
+            $totalRequiredTime += $required * $workPhase->time_norm;
+            $totalCompletedTime += $completed * $workPhase->time_norm;
         }
 
-        if ($totalRequiredTime === 0) {
-            return 0;
-        }
-
-        return round(($totalCompletedTime / $totalRequiredTime) * 100, 2);
+        return $totalRequiredTime === 0 ? 0 : round(($totalCompletedTime / $totalRequiredTime) * 100, 2);
     }
 
-    /**
-     * Returns the code of the product associated with this work order.
-     *
-     * @return string|null
-     */
-    public function getProductCodeAttribute()
-    {
-        return $this->product?->code;
-    }
-
-    /**
-     * Check if the work order is already transferred to the warehouse.
-     *
-     * @return bool
-     */
-    public function isTransferredToWarehouse(): bool
-    {
-        return $this->is_transferred_to_warehouse;
-    }
+    public function getProductCodeAttribute() { return $this->product?->code; }
+    public function isTransferredToWarehouse(): bool { return $this->is_transferred_to_warehouse; }
 }

@@ -1,0 +1,82 @@
+✅ 1. Kreiraj fajl deploy.sh u root folderu aplikacije
+bash
+Copy
+Edit
+sudo nano /var/www/Projekat-Radijator-Inzenjering/deploy.sh
+I ubaci sledeći sadržaj:
+
+bash
+Copy
+Edit
+#!/bin/bash
+
+echo "=== DEPLOY STARTED ==="
+
+# Idi u direktorijum projekta
+cd /var/www/Projekat-Radijator-Inzenjering || exit
+
+# Povuci najnoviji kod
+echo "-> Pulling latest code..."
+git pull origin main
+
+# Postavi prava
+echo "-> Setting permissions..."
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+
+# Install dependencies
+echo "-> Installing Composer dependencies..."
+composer install --no-interaction --prefer-dist --optimize-autoloader
+
+# Clear and cache Laravel stuff
+echo "-> Clearing and caching config..."
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Migrate and seed
+echo "-> Running migrations and seeders..."
+php artisan migrate --force
+php artisan db:seed --force
+
+# Restart services (ako koristiš php-fpm i nginx)
+echo "-> Restarting PHP-FPM and Nginx..."
+systemctl restart php8.3-fpm
+systemctl restart nginx
+
+# Zabeleži datum deploy-a
+echo "Deployed at $(date)" >> storage/logs/deploy.log
+
+echo "=== DEPLOY COMPLETE ==="
+✅ 2. Napravi fajl izvršnim:
+bash
+Copy
+Edit
+chmod +x deploy.sh
+✅ 3. Pokreni svaki put kad deploy-uješ:
+bash
+Copy
+Edit
+./deploy.sh
+✅ BONUS: Korisne git komande za daily rad
+bash
+Copy
+Edit
+# Prikaži status fajlova
+git status
+
+# Dodaj sve izmenjene fajlove
+git add .
+
+# Komituj sa porukom
+git commit -m "Poruka o izmeni"
+
+# Pošalji na server
+git push origin main
+
+# Povuci izmena (na serveru)
+git pull origin main

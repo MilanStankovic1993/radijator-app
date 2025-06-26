@@ -11,7 +11,7 @@ class CustomMailLogger extends AbstractProcessingHandler
 {
     protected function write(LogRecord $record): void
     {
-        Mail::mailer('smtp')->raw($record->message, function ($message) {
+        Mail::raw($record->message, function ($message) {
             $message->to('milan.stankovic@radijator.rs')
                     ->subject('CRITICAL ERROR on Staging (Radijator)')
                     ->from('proizvodnja.app@radijator.rs', 'Radijator Inzenjering');

@@ -10,11 +10,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             // ODRADJENO NA PRODUKCIJI
-            // RolesAndPermissionsSeeder::class,
-            // UserSeeder::class,
-            // ProductWorkPhaseSeeder::class,
-            // ProductFileSeeder::class,
-            // CustomerSeeder::class,
+            RolesAndPermissionsSeeder::class,
+            UserSeeder::class,
+            ProductWorkPhaseSeeder::class,
+            ProductFileSeeder::class,
+            CustomerSeeder::class,
             //////////////////////////////////////
             
         ]);

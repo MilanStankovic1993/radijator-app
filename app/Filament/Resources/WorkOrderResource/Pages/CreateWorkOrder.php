@@ -31,7 +31,7 @@ class CreateWorkOrder extends CreateRecord
         $data = $this->data;
 
         $exists = WorkOrder::where('product_id', $data['product_id'] ?? null)
-            ->where('work_order_number', $data['work_order_number'] ?? null)
+            // ->where('work_order_number', $data['work_order_number'] ?? null)
             ->where('series', $data['series'] ?? null)
             // ->where('quantity', $data['quantity'] ?? null)
             ->exists();

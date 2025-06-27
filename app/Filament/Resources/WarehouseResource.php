@@ -16,14 +16,12 @@ use App\Filament\Traits\HasResourcePermissions;
 
 class WarehouseResource extends Resource
 {
-    // use HasResourcePermissions;
-
     protected static ?string $model = Warehouse::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-archive-box'; // ikonica
+    protected static ?string $navigationIcon = 'heroicon-o-archive-box';
     protected static ?string $navigationLabel = 'Magacin';
     protected static ?string $modelLabel = 'Magacin';
-    // protected static ?int $navigationSort = 3;
+
     public static function getNavigationGroup(): ?string
     {
         return 'Magacin';
@@ -33,6 +31,7 @@ class WarehouseResource extends Resource
     {
         return 2;
     }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -75,16 +74,11 @@ class WarehouseResource extends Resource
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([
-                        'na_cekanju' => 'warning',
-                        'na_stanju' => 'success',
-                        'izdato' => 'danger',
+                        Warehouse::STATUS_NA_CEKANJU => 'warning',
+                        Warehouse::STATUS_NA_STANJU => 'success',
+                        Warehouse::STATUS_IZDATO => 'danger',
                     ])
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'na_cekanju' => 'Na čekanju',
-                        'na_stanju' => 'Na stanju',
-                        'izdato' => 'Izdato',
-                        default => ucfirst($state),
-                    })
+                    ->formatStateUsing(fn ($state) => Warehouse::getStatusOptions()[$state] ?? ucfirst($state))
                     ->sortable()
                     ->toggleable(),
                 ...FilamentColumns::userTrackingColumns(),
@@ -99,11 +93,7 @@ class WarehouseResource extends Resource
 
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
-                    ->options([
-                        'na_cekanju' => 'Na čekanju',
-                        'na_stanju' => 'Na stanju',
-                        'izdato' => 'Izdato',
-                    ]),
+                    ->options(Warehouse::getStatusOptions()),
                 Tables\Filters\Filter::make('created_today')
                     ->label('Uneto danas')
                     ->query(fn (Builder $query) => $query->whereDate('created_at', now()->toDateString())),
@@ -120,89 +110,158 @@ class WarehouseResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn (Warehouse $record) => $record->isPending())
-                    ->form([
-                        Forms\Components\TextInput::make('accepted_quantity')
-                            ->label('Količina za prijem')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(fn (Warehouse $record) => $record->quantity)
+                    ->form(fn (Warehouse $record) => [
+                        Forms\Components\CheckboxList::make('selected_codes')
+                            ->label('Odaberi kodove za prijem')
+                            ->options(
+                                $record->items()
+                                    ->where('status', Warehouse::STATUS_NA_CEKANJU)
+                                    ->get()
+                                    ->filter(fn ($item) => is_string($item->code))
+                                    ->mapWithKeys(fn ($item) => [
+                                        (string) $item->code => 'Kod: ' . $item->code . ' | RN: ' . $item->work_order_id
+                                    ])
+                                    ->toArray()
+                            )
+                            // ->bulkToggleable()
+                            ->columns(2)
                             ->required(),
                     ])
                     ->action(function (array $data, Warehouse $record) {
-                        $quantityToAccept = (int) $data['accepted_quantity'];
+                        $selectedCodes = $data['selected_codes'] ?? [];
+                        if (empty($selectedCodes)) {
+                            return;
+                        }
 
-                        // Smanji količinu iz zapisa koji je na čekanju
-                        $record->decrement('quantity', $quantityToAccept);
+                        $items = \App\Models\WarehouseItem::query()
+                            ->whereIn('code', $selectedCodes)
+                            ->where('status', Warehouse::STATUS_NA_CEKANJU)
+                            ->get();
 
-                        // Ako je količina pala na 0, obriši red
-                        if ($record->quantity <= 0) {
+                        if ($items->isEmpty()) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Greška')
+                                ->body('Nijedan kod nije validan za ovaj magacin.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+                        foreach ($items as $item) {
+                            $item->update([
+                                'status' => Warehouse::STATUS_NA_STANJU,
+                                'updated_by' => auth()->id(),
+                            ]);
+                        }
+
+                        $record->decrement('quantity', count($selectedCodes));
+
+                        if ($record->fresh()->quantity <= 0) {
                             $record->delete();
                         }
 
-                        // Povećaj količinu u 'na_stanju' ako postoji
                         $existing = Warehouse::where('product_id', $record->product_id)
                             ->where('location', $record->location)
                             ->where('status', Warehouse::STATUS_NA_STANJU)
                             ->first();
 
                         if ($existing) {
-                            $existing->increment('quantity', $quantityToAccept);
+                            $existing->increment('quantity', count($selectedCodes));
                         } else {
                             Warehouse::create([
                                 'product_id' => $record->product_id,
                                 'location' => $record->location,
                                 'status' => Warehouse::STATUS_NA_STANJU,
-                                'quantity' => $quantityToAccept,
+                                'quantity' => count($selectedCodes),
                                 'created_by' => auth()->id(),
                                 'updated_by' => auth()->id(),
                             ]);
                         }
                     }),
+                    Tables\Actions\Action::make('issue_stock')
+                        ->label('Izdaj robu')
+                        ->icon('heroicon-o-truck')
+                        ->color('danger')
+                        ->visible(fn (Warehouse $record) => $record->isAvailable())
+                        ->form(function (Warehouse $record) {
+                            $items = \App\Models\WarehouseItem::query()
+                                ->where('product_id', $record->product_id)
+                                ->where('location', $record->location)
+                                ->where('status', Warehouse::STATUS_NA_STANJU)
+                                ->get()
+                                ->filter(fn ($item) => is_string($item->code));
 
-                Tables\Actions\Action::make('issue_stock')
-                    ->label('Izdaj robu')
-                    ->icon('heroicon-o-truck')
-                    ->color('danger')
-                    ->visible(fn (Warehouse $record) => $record->isAvailable())
-                    ->form([
-                        Forms\Components\TextInput::make('issue_quantity')
-                            ->label('Količina za izdavanje')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(fn (Warehouse $record) => $record->quantity)
-                            ->required(),
-                    ])
-                    ->action(function (array $data, Warehouse $record) {
-                        $quantityToIssue = (int) $data['issue_quantity'];
+                            return [
+                                Forms\Components\CheckboxList::make('selected_codes')
+                                    ->label('Odaberi kodove za izdavanje')
+                                    ->options(
+                                        $items->mapWithKeys(fn ($item) => [
+                                            (string) $item->code => 'Kod: ' . $item->code . ' | RN: ' . $item->work_order_id
+                                        ])->toArray()
+                                    )
+                                    // ->bulkToggleable()
+                                    ->columns(2)
+                                    ->required(),
+                            ];
+                        })
+                        ->action(function (array $data, Warehouse $record) {
+                            $selectedCodes = $data['selected_codes'] ?? [];
 
-                        // Pronađi 'izdato' red (mora pre update-a)
-                        $issued = Warehouse::where('product_id', $record->product_id)
-                            ->where('location', $record->location)
-                            ->where('status', Warehouse::STATUS_IZDATO)
-                            ->first();
+                            if (empty($selectedCodes)) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Greška')
+                                    ->body('Nijedan kod nije izabran za izdavanje.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
 
-                        // Ako postoji 'izdato', dodaj količinu
-                        if ($issued) {
-                            $issued->increment('quantity', $quantityToIssue);
-                        } else {
-                            Warehouse::create([
-                                'product_id' => $record->product_id,
-                                'location' => $record->location,
-                                'status' => Warehouse::STATUS_IZDATO,
-                                'quantity' => $quantityToIssue,
-                                'created_by' => auth()->id(),
-                                'updated_by' => auth()->id(),
-                            ]);
-                        }
+                            $itemsToIssue = \App\Models\WarehouseItem::query()
+                                ->whereIn('code', $selectedCodes)
+                                ->where('status', Warehouse::STATUS_NA_STANJU)
+                                ->get();
 
-                        // Smanji količinu
-                        $record->decrement('quantity', $quantityToIssue);
+                            // 1. Ažuriraj kodove
+                            foreach ($itemsToIssue as $item) {
+                                $item->update([
+                                    'status' => Warehouse::STATUS_IZDATO,
+                                    'updated_by' => auth()->id(),
+                                ]);
+                            }
 
-                        // Ako nema više na stanju, briši red
-                        if ($record->quantity <= 0) {
-                            $record->delete();
-                        }
-                    }),
+                            // 2. Smanji količinu u ovom redu
+                            $record->decrement('quantity', count($itemsToIssue));
+
+                            // 3. Obriši ako je 0
+                            if ($record->fresh()->quantity <= 0) {
+                                $record->delete();
+                            }
+
+                            // 4. Nađi red sa statusom `izdato` za isti proizvod/lokaciju
+                            $existing = Warehouse::query()
+                                ->where('product_id', $record->product_id)
+                                ->where('location', $record->location)
+                                ->where('status', Warehouse::STATUS_IZDATO)
+                                ->first();
+
+                            if ($existing) {
+                                $existing->increment('quantity', count($itemsToIssue));
+                            } else {
+                                Warehouse::create([
+                                    'product_id' => $record->product_id,
+                                    'location' => $record->location,
+                                    'status' => Warehouse::STATUS_IZDATO,
+                                    'quantity' => count($itemsToIssue),
+                                    'created_by' => auth()->id(),
+                                    'updated_by' => auth()->id(),
+                                ]);
+                            }
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Uspešno')
+                                ->body("Izdato " . count($itemsToIssue) . " komada.")
+                                ->success()
+                                ->send();
+                        }),
 
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -217,9 +276,7 @@ class WarehouseResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

@@ -45,7 +45,7 @@ class WarehouseItemResource extends Resource
                         default => ucfirst($state),
                     }),
                 Tables\Columns\TextColumn::make('quantity')->label('Količina'),
-                Tables\Columns\TextColumn::make('workOrder.work_order_number')->label('Radni nalog'),
+                Tables\Columns\TextColumn::make('workOrder.full_name')->label('Radni nalog'),
                 Tables\Columns\TextColumn::make('created_at')->label('Datum')->dateTime()->sortable(),
             ])
             ->filters([

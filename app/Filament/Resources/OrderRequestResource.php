@@ -118,6 +118,15 @@ class OrderRequestResource extends Resource
                 ...FilamentColumns::userTrackingColumns(),
             ])
             ->actions([
+                Action::make('generisiFakturu')
+                    ->icon('heroicon-o-document-text')
+                    ->label('Generiši fakturu')
+                    ->color('primary')
+                    ->action(function (OrderRequest $record) {
+                        return response()->streamDownload(function () use ($record) {
+                            echo \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.invoice', ['order' => $record])->stream();
+                        }, 'faktura-' . $record->order_code . '.pdf');
+                    }),
                 Action::make('prikaziStavke')
                     ->icon('heroicon-o-list-bullet')
                     ->label('Stavke')
@@ -128,7 +137,6 @@ class OrderRequestResource extends Resource
                         'filament.resources.order-request.items-modal',
                         ['order' => $record]
                     )),
-                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),

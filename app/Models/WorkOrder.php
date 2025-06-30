@@ -89,11 +89,21 @@ class WorkOrder extends Model
 
     public function getReadyToTransferCountAttribute(): int
     {
-        $itemCounts = $this->items->map(function ($item) {
-            return floor($item->total_completed) - $item->transferred_count;
-        });
+        if ($this->items->isEmpty()) {
+            return 0;
+        }
 
-        return $itemCounts->isEmpty() ? 0 : max(0, $itemCounts->min());
+        // Minimalan broj završenih po fazama (koliko celih proizvoda je spremno)
+        $minCompleted = $this->items
+            ->map(fn ($item) => floor($item->total_completed))
+            ->min();
+
+        // Minimalan broj već transferovanih po fazama (koliko puta je već ceo proizvod poslat)
+        $minTransferred = $this->items
+            ->map(fn ($item) => $item->transferred_count)
+            ->min();
+
+        return max(0, $minCompleted - $minTransferred);
     }
 
     public function checkIfFullyTransferredAndUpdate(): void

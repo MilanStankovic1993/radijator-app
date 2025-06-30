@@ -129,9 +129,7 @@ class WarehouseResource extends Resource
                     ])
                     ->action(function (array $data, Warehouse $record) {
                         $selectedCodes = $data['selected_codes'] ?? [];
-                        if (empty($selectedCodes)) {
-                            return;
-                        }
+                        if (empty($selectedCodes)) return;
 
                         $items = \App\Models\WarehouseItem::query()
                             ->whereIn('code', $selectedCodes)
@@ -146,37 +144,37 @@ class WarehouseResource extends Resource
                                 ->send();
                             return;
                         }
+
+                        // Pronađi red koji je već "na stanju", ili napravi novi
+                        $existing = Warehouse::firstOrCreate(
+                            [
+                                'product_id' => $record->product_id,
+                                'location' => $record->location,
+                                'status' => Warehouse::STATUS_NA_STANJU,
+                            ],
+                            [
+                                'quantity' => 0,
+                                'created_by' => auth()->id(),
+                                'updated_by' => auth()->id(),
+                            ]
+                        );
+
                         foreach ($items as $item) {
                             $item->update([
                                 'status' => Warehouse::STATUS_NA_STANJU,
+                                'warehouse_id' => $existing->id,
                                 'updated_by' => auth()->id(),
                             ]);
                         }
 
                         $record->decrement('quantity', count($selectedCodes));
+                        $existing->increment('quantity', count($selectedCodes));
 
                         if ($record->fresh()->quantity <= 0) {
-                            $record->delete();
-                        }
-
-                        $existing = Warehouse::where('product_id', $record->product_id)
-                            ->where('location', $record->location)
-                            ->where('status', Warehouse::STATUS_NA_STANJU)
-                            ->first();
-
-                        if ($existing) {
-                            $existing->increment('quantity', count($selectedCodes));
-                        } else {
-                            Warehouse::create([
-                                'product_id' => $record->product_id,
-                                'location' => $record->location,
-                                'status' => Warehouse::STATUS_NA_STANJU,
-                                'quantity' => count($selectedCodes),
-                                'created_by' => auth()->id(),
-                                'updated_by' => auth()->id(),
-                            ]);
+                            $record->delete(); // brišemo samo ako je potpuno prazan
                         }
                     }),
+
                     Tables\Actions\Action::make('issue_stock')
                         ->label('Izdaj robu')
                         ->icon('heroicon-o-truck')
@@ -203,65 +201,58 @@ class WarehouseResource extends Resource
                                     ->required(),
                             ];
                         })
-                        ->action(function (array $data, Warehouse $record) {
-                            $selectedCodes = $data['selected_codes'] ?? [];
+                    ->action(function (array $data, Warehouse $record) {
+                        $selectedCodes = $data['selected_codes'] ?? [];
 
-                            if (empty($selectedCodes)) {
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Greška')
-                                    ->body('Nijedan kod nije izabran za izdavanje.')
-                                    ->danger()
-                                    ->send();
-                                return;
-                            }
-
-                            $itemsToIssue = \App\Models\WarehouseItem::query()
-                                ->whereIn('code', $selectedCodes)
-                                ->where('status', Warehouse::STATUS_NA_STANJU)
-                                ->get();
-
-                            // 1. Ažuriraj kodove
-                            foreach ($itemsToIssue as $item) {
-                                $item->update([
-                                    'status' => Warehouse::STATUS_IZDATO,
-                                    'updated_by' => auth()->id(),
-                                ]);
-                            }
-
-                            // 2. Smanji količinu u ovom redu
-                            $record->decrement('quantity', count($itemsToIssue));
-
-                            // 3. Obriši ako je 0
-                            if ($record->fresh()->quantity <= 0) {
-                                $record->delete();
-                            }
-
-                            // 4. Nađi red sa statusom `izdato` za isti proizvod/lokaciju
-                            $existing = Warehouse::query()
-                                ->where('product_id', $record->product_id)
-                                ->where('location', $record->location)
-                                ->where('status', Warehouse::STATUS_IZDATO)
-                                ->first();
-
-                            if ($existing) {
-                                $existing->increment('quantity', count($itemsToIssue));
-                            } else {
-                                Warehouse::create([
-                                    'product_id' => $record->product_id,
-                                    'location' => $record->location,
-                                    'status' => Warehouse::STATUS_IZDATO,
-                                    'quantity' => count($itemsToIssue),
-                                    'created_by' => auth()->id(),
-                                    'updated_by' => auth()->id(),
-                                ]);
-                            }
-
+                        if (empty($selectedCodes)) {
                             \Filament\Notifications\Notification::make()
-                                ->title('Uspešno')
-                                ->body("Izdato " . count($itemsToIssue) . " komada.")
-                                ->success()
+                                ->title('Greška')
+                                ->body('Nijedan kod nije izabran za izdavanje.')
+                                ->danger()
                                 ->send();
-                        }),
+                            return;
+                        }
+
+                        $itemsToIssue = \App\Models\WarehouseItem::query()
+                            ->whereIn('code', $selectedCodes)
+                            ->where('status', Warehouse::STATUS_NA_STANJU)
+                            ->get();
+
+                        // Pronađi ili kreiraj red za "izdato"
+                        $existing = Warehouse::firstOrCreate(
+                            [
+                                'product_id' => $record->product_id,
+                                'location' => $record->location,
+                                'status' => Warehouse::STATUS_IZDATO,
+                            ],
+                            [
+                                'quantity' => 0,
+                                'created_by' => auth()->id(),
+                                'updated_by' => auth()->id(),
+                            ]
+                        );
+
+                        foreach ($itemsToIssue as $item) {
+                            $item->update([
+                                'status' => Warehouse::STATUS_IZDATO,
+                                'warehouse_id' => $existing->id,
+                                'updated_by' => auth()->id(),
+                            ]);
+                        }
+
+                        $record->decrement('quantity', count($itemsToIssue));
+                        $existing->increment('quantity', count($itemsToIssue));
+
+                        if ($record->fresh()->quantity <= 0) {
+                            $record->delete(); // brišemo samo ako je prazan
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Uspešno')
+                            ->body("Izdato " . count($itemsToIssue) . " komada.")
+                            ->success()
+                            ->send();
+                    }),
 
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

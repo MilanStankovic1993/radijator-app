@@ -14,12 +14,14 @@ if (window.Laravel?.user) {
         broadcaster: 'pusher',
         key: import.meta.env.VITE_REVERB_APP_KEY,
         wsHost: import.meta.env.VITE_REVERB_HOST || window.location.hostname,
-        wsPort: import.meta.env.VITE_REVERB_PORT || 6001,
-        wssPort: import.meta.env.VITE_REVERB_PORT || 6001,
+        wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
+        wssPort: import.meta.env.VITE_REVERB_PORT || 8080,
+        wsPath: '/ws/',            // <--- OVDE
         forceTLS: isSecure,
         encrypted: isSecure,
         enabledTransports: isSecure ? ['wss'] : ['ws'],
         cluster: 'mt1',
+        disableStats: true,
     });
 
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

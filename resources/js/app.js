@@ -7,10 +7,11 @@ import 'izitoast/dist/css/iziToast.min.css';
 window.Pusher = Pusher;
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const isSecure = window.location.protocol === 'https:';
+
 console.log('✅ JS učitan');
 
 if (window.Laravel?.user) {
-    window.Echo = new Echo({
+    const echoOptions = {
         broadcaster: 'pusher',
         key: import.meta.env.VITE_REVERB_APP_KEY,
         wsHost: import.meta.env.VITE_REVERB_HOST || window.location.hostname,
@@ -21,7 +22,14 @@ if (window.Laravel?.user) {
         enabledTransports: isSecure ? ['wss'] : ['ws'],
         cluster: 'mt1',
         disableStats: true,
-    });
+    };
+
+    // Dodaj wsPath samo ako nisi lokalno (na produkciji)
+    if (!isLocalhost) {
+        echoOptions.wsPath = '/ws/';
+    }
+
+    window.Echo = new Echo(echoOptions);
 
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 

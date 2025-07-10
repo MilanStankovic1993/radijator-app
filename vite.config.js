@@ -9,12 +9,13 @@ export default defineConfig({
     server: {
         host: '127.0.0.1',
         port: 5173,
-        https: isProduction, // true samo u produkciji
+        https: isProduction,
     },
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
+            buildDirectory: 'build',
         }),
         tailwindcss(),
     ],

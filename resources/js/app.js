@@ -16,7 +16,6 @@ if (window.Laravel?.user) {
         wsHost: import.meta.env.VITE_REVERB_HOST || window.location.hostname,
         wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
         wssPort: import.meta.env.VITE_REVERB_PORT || 8080,
-        wsPath: '/ws/',            // <--- OVDE
         forceTLS: isSecure,
         encrypted: isSecure,
         enabledTransports: isSecure ? ['wss'] : ['ws'],

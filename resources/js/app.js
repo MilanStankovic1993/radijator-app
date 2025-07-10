@@ -5,7 +5,8 @@ import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
 window.Pusher = Pusher;
-
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const isSecure = window.location.protocol === 'https:';
 console.log('✅ JS učitan');
 
 if (window.Laravel?.user) {
@@ -13,11 +14,11 @@ if (window.Laravel?.user) {
         broadcaster: 'pusher',
         key: import.meta.env.VITE_REVERB_APP_KEY,
         wsHost: import.meta.env.VITE_REVERB_HOST || window.location.hostname,
-        wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
-        wssPort: import.meta.env.VITE_REVERB_PORT || 8080,
-        forceTLS: false,
-        enabledTransports: ['ws'],
-        withCredentials: true,
+        wsPort: import.meta.env.VITE_REVERB_PORT || 6001,
+        wssPort: import.meta.env.VITE_REVERB_PORT || 6001,
+        forceTLS: isSecure,
+        encrypted: isSecure,
+        enabledTransports: isSecure ? ['wss'] : ['ws'],
         cluster: 'mt1',
     });
 

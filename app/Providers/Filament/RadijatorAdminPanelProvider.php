@@ -32,7 +32,7 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ->brandName('Radijator Inženjering')
             ->brandLogo(asset('images/logo.png'))
             ->maxContentWidth('full')
-            ->databaseNotifications()
+            ->renderHook('panels::body.end', fn () => view('filament.layouts.app'))
             ->colors([
                 'primary' => Color::Amber,
             ])

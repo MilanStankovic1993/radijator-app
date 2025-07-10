@@ -16,4 +16,10 @@ class ListCustomers extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+    protected function getListeners(): array
+    {
+        return [
+            'refreshCustomerTable' => '$refresh',
+        ];
+    }
 }

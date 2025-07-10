@@ -2,10 +2,14 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export default defineConfig({
     base: '/build/',
     server: {
-        https: true,
+        host: '127.0.0.1',
+        port: 5173,
+        https: isProduction, // true samo u produkciji
     },
     plugins: [
         laravel({

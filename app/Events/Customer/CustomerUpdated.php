@@ -35,8 +35,6 @@ class CustomerUpdated implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        \Log::info("📢 Broadcastujem: user={$this->name}, customer={$this->customerName}");
-
         return [
             'user' => $this->name,
             'customer' => $this->customerName,

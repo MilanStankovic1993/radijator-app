@@ -5,28 +5,33 @@ import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
 window.Pusher = Pusher;
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const isSecure = window.location.protocol === 'https:';
+
 console.log('✅ JS učitan');
 
-if (window.Laravel?.user) {
-    const echoOptions = {
-        broadcaster: 'pusher',
-        key: import.meta.env.VITE_REVERB_APP_KEY,
-        wsHost: import.meta.env.VITE_REVERB_HOST || window.location.hostname,
-        wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
-        wssPort: import.meta.env.VITE_REVERB_PORT || 8080,
-        forceTLS: isSecure,
-        encrypted: isSecure,
-        enabledTransports: isSecure ? ['wss'] : ['ws'],
-        cluster: 'mt1',
-        disableStats: true,
-    };
-    window.Echo = new Echo(echoOptions);
+const isSecure = window.location.protocol === 'https:';
+const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
+const echoOptions = {
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: import.meta.env.VITE_REVERB_HOST || window.location.hostname,
+    wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
+    wssPort: import.meta.env.VITE_REVERB_PORT || 8080,
+    forceTLS: isSecure,
+    encrypted: isSecure,
+    enabledTransports: isSecure ? ['wss'] : ['ws'],
+    cluster: 'mt1',
+    disableStats: true,
+};
+
+window.Echo = new Echo(echoOptions);
+
+console.log('📡 Echo konekcija:', echoOptions);
+
+if (window.Laravel?.user) {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // 📦 Ažuriran kupac
+    // 👤 Kupac ažuriran
     window.Echo.channel('customer-updates')
         .listen('.customer.updated', (e) => {
             if (window.Laravel?.user?.name === e.user) return;
@@ -51,7 +56,7 @@ if (window.Laravel?.user) {
             window.Livewire?.dispatch('refreshCustomerTable');
         })
 
-        // 🆕 Kreiran kupac
+        // ➕ Novi kupac
         .listen('.customer.created', (e) => {
             if (window.Laravel?.user?.name === e.user) return;
 
@@ -75,43 +80,12 @@ if (window.Laravel?.user) {
             window.Livewire?.dispatch('refreshCustomerTable');
         });
 
-        // 🔒 Zaključan kupac
-        // .listen('.customer.locked', (e) => {
-        //     if (window.Laravel?.user?.id === e.user_id) return;
-
-        //     iziToast.warning({
-        //         title: '🔒 Kupac zaključan',
-        //         message: `Kupac <b>${e.customer}</b> je trenutno u izmeni od strane <b>${e.user}</b>.`,
-        //         position: 'topRight',
-        //         timeout: 6000,
-        //         icon: 'fa fa-lock',
-        //         layout: 2,
-        //         progressBarColor: '#ffc107',
-        //         backgroundColor: isDark ? '#2c2f36' : '#fff4e5',
-        //         titleColor: isDark ? '#ffc107' : '#d17c00',
-        //         messageColor: isDark ? '#f8f9fa' : '#333',
-        //         transitionIn: 'fadeInDown',
-        //         transitionOut: 'fadeOutUp',
-        //         balloon: true,
-        //         class: 'rounded shadow',
-        //     });
-
-        //     window.Livewire?.dispatch('customerLocked', { id: e.customer_id });
-        // })
-
-        // // 🔓 Otključan kupac
-        // .listen('.customer.unlocked', (e) => {
-        //     if (window.Laravel?.user?.id === e.user_id) return;
-
-        //  window.Livewire?.dispatch('customerUnlocked', { id: e.customer_id });
-        // });
-
-    // 🔔 Broadcast notifikacije (npr. iz Notification klasa)
+    // 🔔 Notifikacije (Laravel Notification)
     window.Echo.private(`App.Models.User.${window.Laravel.user.id}`)
         .notification((notification) => {
-            console.log('🔔 Stigla notifikacija:', notification);
+            console.log('🔔 Nova notifikacija:', notification);
 
-            iziToast.show({
+            iziToast.info({
                 title: notification.title ?? 'Obaveštenje',
                 message: notification.message ?? '',
                 position: 'topRight',

@@ -12,9 +12,9 @@ class CustomerUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public string $name;
-    public int $userId;
-    public string $customerName;
+    protected string $name;
+    protected int $userId;
+    protected string $customerName;
 
     public function __construct(string $name, int $userId, string $customerName)
     {
@@ -37,8 +37,8 @@ class CustomerUpdated implements ShouldBroadcast
     {
         return [
             'user' => $this->name,
+            'user_id' => $this->userId,
             'customer' => $this->customerName,
         ];
     }
 }
-

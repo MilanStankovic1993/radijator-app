@@ -18,7 +18,7 @@ const echoOptions = {
     wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
     forceTLS: false, // 🔥
     encrypted: false, // 🔥
-    enabledTransports: ['ws'], // 🔥
+    enabledTransports: isSecure ? ['wss'] : ['ws'],
     cluster: 'mt1',
     disableStats: true,
 };

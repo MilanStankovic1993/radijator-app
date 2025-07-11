@@ -12,10 +12,10 @@ return [
             'secret' => env('REVERB_APP_SECRET', 'dummy-secret'),
             'app_id' => env('REVERB_APP_ID', 'radijator-app'),
             'options' => [
-                'host' => env('REVERB_HOST', '127.0.0.1'),
+                'host' => env('REVERB_HOST'),
                 'port' => env('REVERB_PORT', 8080),
-                'scheme' => env('REVERB_SCHEME', 'ws'),
-                'useTLS' => false, // 🔥 VAŽNO
+                'scheme' => env('REVERB_SCHEME', 'http'),
+                'useTLS' => false,
             ],
         ],
 

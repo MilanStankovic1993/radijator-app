@@ -12,9 +12,9 @@ class CustomerUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    protected string $name;
-    protected int $userId;
-    protected string $customerName;
+    public string $name;
+    public int $userId;
+    public string $customerName;
 
     public function __construct(string $name, int $userId, string $customerName)
     {

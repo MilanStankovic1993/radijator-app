@@ -15,10 +15,11 @@ const echoOptions = {
     broadcaster: 'pusher',
     key: import.meta.env.VITE_REVERB_APP_KEY,
     wsHost: import.meta.env.VITE_REVERB_HOST || window.location.hostname,
-    wsPort: import.meta.env.VITE_REVERB_PORT || 8080,
-    forceTLS: false, // 🔥
-    encrypted: false, // 🔥
-    enabledTransports: isSecure ? ['wss'] : ['ws'],
+    wsPort: import.meta.env.VITE_REVERB_PORT || 443,
+    wssPort: import.meta.env.VITE_REVERB_PORT || 443,
+    forceTLS: true,
+    encrypted: true,
+    enabledTransports: ['wss'],
     cluster: 'mt1',
     disableStats: true,
 };

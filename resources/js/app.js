@@ -37,6 +37,7 @@ window.Echo.connector.pusher.connection.bind('state_change', (states) => {
 });
 
 console.log('📡 Echo konekcija:', echoOptions);
+console.log('👤 window.Laravel.user:', window.Laravel?.user);
 
 if (window.Laravel?.user) {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

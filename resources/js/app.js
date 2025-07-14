@@ -25,6 +25,16 @@ const echoOptions = {
 };
 
 window.Echo = new Echo(echoOptions);
+window.Echo.connector.pusher.connection.bind('connected', () => {
+    console.log('📶 Echo konekcija USPOSTAVLJENA!');
+});
+window.Echo.connector.pusher.connection.bind('error', (err) => {
+    console.error('❌ Echo konekcija greška:', err);
+});
+
+window.Echo.connector.pusher.connection.bind('state_change', (states) => {
+    console.log('🔄 Echo konekcija stanje:', states);
+});
 
 console.log('📡 Echo konekcija:', echoOptions);
 

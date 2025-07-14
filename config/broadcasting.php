@@ -12,10 +12,10 @@ return [
             'secret' => env('REVERB_APP_SECRET', 'dummy-secret'),
             'app_id' => env('REVERB_APP_ID', 'radijator-app'),
             'options' => [
-                'host' => env('REVERB_HOST'),
-                'port' => env('REVERB_PORT', 8080),
-                'scheme' => env('REVERB_SCHEME', 'http'),
-                'useTLS' => false,
+                'host' => env('REVERB_HOST', 'radijatorapp.duckdns.org'),
+                'port' => env('REVERB_PORT', 443),
+                'scheme' => env('REVERB_SCHEME', 'https'),
+                'useTLS' => true,
             ],
         ],
 

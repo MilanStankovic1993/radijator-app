@@ -40,11 +40,13 @@ console.log('📡 Echo konekcija:', echoOptions);
 console.log('👤 window.Laravel.user:', window.Laravel?.user);
 
 if (window.Laravel?.user) {
+    console.log('📡 Pokušavam povezivanje na kanal...');
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
     // 👤 Kupac ažuriran
     window.Echo.channel('customer-updates')
         .listen('.customer.updated', (e) => {
+            console.log('🎯 PRIMLJEN DOGAĐAJ:', e);
             if (window.Laravel?.user?.name === e.user) return;
 
             iziToast.show({

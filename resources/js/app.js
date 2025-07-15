@@ -69,7 +69,7 @@ if (window.Laravel?.user) {
             window.Livewire?.dispatch('refreshCustomerTable');
         })
 
-        // ➕ Novi kupac
+        // ➕ Novi kupac //
         .listen('.customer.created', (e) => {
             if (window.Laravel?.user?.name === e.user) return;
 

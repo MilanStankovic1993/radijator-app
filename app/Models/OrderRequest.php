@@ -17,8 +17,12 @@ class OrderRequest extends Model
         'customer_id',
         'customer_name', 
         'status',
+        'expected_delivery_date',
         'created_by',
         'updated_by'
+    ];
+    protected $casts = [
+        'expected_delivery_date' => 'date',
     ];
 
     public function items(): HasMany

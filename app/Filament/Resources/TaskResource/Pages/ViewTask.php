@@ -13,7 +13,6 @@ class ViewTask extends ViewRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $this->record->users()->updateExistingPivot(auth()->id(), ['is_read' => true]);
-        // Poziv metode koja ažurira status
         $this->record->updateStatus();
         return $data;
     }

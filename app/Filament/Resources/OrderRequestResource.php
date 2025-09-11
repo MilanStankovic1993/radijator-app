@@ -12,6 +12,8 @@ use Filament\Forms\Form;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Grid;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
@@ -59,7 +61,14 @@ class OrderRequestResource extends Resource
                     TextInput::make('name')->required()->label('Ime kupca'),
                 ])
                 ->createOptionUsing(fn (array $data) => Customer::create($data)->id),
-
+            DatePicker::make('expected_delivery_date')
+                ->label('Očekivani datum isporuke')
+                ->native(false)
+                ->displayFormat('d.m.Y')
+                ->closeOnDateSelection()
+                ->minDate(now()->subYears(1))
+                ->hint('Opcionalno')
+                ->columnSpanFull(),
             Repeater::make('items')
                 ->label('Proizvodi')
                 ->relationship('items')
@@ -70,14 +79,14 @@ class OrderRequestResource extends Resource
                             ->options(Product::all()->pluck('name', 'id')->toArray())
                             ->searchable()
                             ->required()
-                            ->columnSpan(8), // 8 od 12 => 66.7%
+                            ->columnSpan(8),
 
                         TextInput::make('quantity')
                             ->label('Količina')
                             ->numeric()
                             ->minValue(1)
                             ->required()
-                            ->columnSpan(4), // 4 od 12 => 33.3%
+                            ->columnSpan(4),
                     ]),
                 ])
                 ->grid(3)
@@ -104,7 +113,25 @@ class OrderRequestResource extends Resource
                     ->label('Kupac')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('expected_delivery_date')
+                    ->label('Očekivana isporuka')
+                    ->date('d.m.Y')
+                    ->sortable()
+                    ->badge()
+                    ->color(function ($state) {
+                        if (! $state) return 'gray';
+                        $today = now()->startOfDay();
+                        $date  = $state instanceof \Carbon\Carbon ? $state->startOfDay() : \Carbon\Carbon::parse($state)->startOfDay();
 
+                        if ($date->lt($today)) return 'danger';          // zakasnelo
+                        if ($date->lte($today->copy()->addDays(3))) return 'warning'; // uskoro (≤3 dana)
+                        return 'success';                                // ok
+                    })
+                    ->tooltip(function ($state) {
+                        if (! $state) return 'Nije postavljeno';
+                        $date = $state instanceof \Carbon\Carbon ? $state : \Carbon\Carbon::parse($state);
+                        return 'Rok: '.$date->format('d.m.Y');
+                    }),
                 TextColumn::make('items_count')
                     ->label('Broj proizvoda')
                     ->counts('items')
@@ -138,6 +165,18 @@ class OrderRequestResource extends Resource
                         ['order' => $record]
                     )),
             ])
+            ->filters([
+                Filter::make('overdue')
+                    ->label('Zakasnelo')
+                    ->query(fn ($q) => $q->whereDate('expected_delivery_date', '<', now()->toDateString())),
+
+                Filter::make('next7')
+                    ->label('Sledećih 7 dana')
+                    ->query(fn ($q) => $q->whereBetween('expected_delivery_date', [
+                        now()->toDateString(),
+                        now()->addDays(7)->toDateString(),
+                    ])),
+            ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
@@ -153,6 +192,7 @@ class OrderRequestResource extends Resource
         return [
             'index' => Pages\ListOrderRequests::route('/'),
             'create' => Pages\CreateOrderRequest::route('/create'),
+            'view'   => Pages\ViewOrderRequest::route('/{record}'),
             'edit' => Pages\EditOrderRequest::route('/{record}/edit'),
         ];
     }

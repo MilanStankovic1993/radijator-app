@@ -46,6 +46,7 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                \App\Filament\Widgets\MyCalendarWidget::class,
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])

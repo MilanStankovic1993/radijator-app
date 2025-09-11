@@ -16,6 +16,10 @@ class Task extends Model
         'due_date',
     ];
 
+    protected $casts = [
+        'due_date' => 'datetime',
+    ];
+
     // Korisnici kojima je dodeljen zadatak
     public function users()
     {

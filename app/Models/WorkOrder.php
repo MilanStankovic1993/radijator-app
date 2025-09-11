@@ -28,6 +28,10 @@ class WorkOrder extends Model
         'updated_by',
     ];
 
+    protected $casts = [
+        'launch_date' => 'date',
+    ];
+
     protected $appends = ['transferred_count', 'ready_to_transfer_count'];
 
     protected static function booted()

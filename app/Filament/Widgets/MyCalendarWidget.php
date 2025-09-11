@@ -2,9 +2,6 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Resources\OrderRequestResource;
-use App\Filament\Resources\TaskResource;
-use App\Filament\Resources\WorkOrderResource;
 use App\Models\OrderRequest;
 use App\Models\Task;
 use App\Models\WorkOrder;
@@ -18,32 +15,34 @@ use Illuminate\Support\Carbon;
 
 class MyCalendarWidget extends CalendarWidget
 {
-    protected string $calendarView = 'dayGridMonth';
+    protected string $calendarView = 'timeGridWeek';
     protected ?string $locale = 'sr';
     protected bool $useFilamentTimezone = true;
 
-    // ponašanje klika
     protected bool $eventClickEnabled  = true;
     protected bool $dateClickEnabled   = false;
     protected bool $dateSelectEnabled  = false;
-    protected ?string $defaultEventClickAction = null; // bez slideOver-a
+    protected ?string $defaultEventClickAction = 'view';
 
-    // boje po tipu
-    private const COLOR_TASK       = '#3b82f6'; // plava
-    private const COLOR_WORK_ORDER = '#5cf676ff'; // ljubičasta
-    private const COLOR_ORDER      = '#10b981'; // zelena
+    private const COLOR_TASK       = '#3b82f6';
+    private const COLOR_WORK_ORDER = '#8b5cf6';
+    private const COLOR_ORDER      = '#10b981';
 
-    // filter state
     public bool $showTasks = true;
     public bool $showWorkOrders = true;
     public bool $showOrders = true;
+
+    // ⬇️ dodato: klasa na root <div> widgeta – koristimo je u CSS-u
+    protected function getExtraAttributes(): array
+    {
+        return ['class' => 'fim-cal'];
+    }
 
     public function authorize($ability, $arguments = []): bool
     {
         return true;
     }
 
-    # ====== UI: FILTER dugme u headeru ======
     public function getHeaderActions(): array
     {
         return [
@@ -87,38 +86,27 @@ class MyCalendarWidget extends CalendarWidget
     public function getOptions(): array
     {
         return array_replace_recursive(parent::getOptions(), [
-            'timeZone'          => 'local',
-            'displayEventTime'  => false,
-
-            // >>> ključne stavke
-            'dayMaxEvents'      => 1,    // maksimalno 1 događaj vidljiv u danu (ostalo ide u "+ još")
-            'views' => [
-                'dayGridMonth' => [
-                    'dayMaxEventRows' => 1,      // i za višednevne trake (RN) takođe max 1 red
-                    'moreLinkClick'   => 'popover',
-                    'moreLinkText'    => '+ još',
-                ],
-            ],
-            // prioritet prikaza: prvo RN (A_), pa Task (B_), pa Porudžbina (C_)
-            'eventOrder'        => ['type', 'start', 'title'],
-            'eventOrderStrict'  => true,
-
-            // malo veća mreža
-            'height'            => 'auto',
-            'expandRows'        => true,
-            'aspectRatio'       => 1.05, // manja vrednost = viši kalendar
-            // Toolbar + dodatni pogledi
+            'timeZone' => 'local',
+            'displayEventTime' => false,
             'headerToolbar' => [
                 'start'  => 'prev,next today',
                 'center' => 'title',
-                'end'    => 'dayGridMonth,dayGridWeek,timeGridWeek,timeGridDay,listWeek',
+                'end'    => 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
             ],
-            'buttonText' => [
-                'today'  => 'danas',
-                'month'  => 'mesec',
-                'week'   => 'nedelja',
-                'day'    => 'dan',
-                'list'   => 'lista',
+            'views' => [
+                'dayGridMonth' => [
+                    'dayMaxEvents'  => 2,
+                    'moreLinkClick' => 'popover',
+                    'moreLinkText'  => '+ još',
+                ],
+                'timeGridWeek' => [
+                    'slotDuration' => '00:30',
+                    'nowIndicator' => true,
+                    'allDaySlot'   => true,
+                ],
+                'listWeek' => [
+                    'noEventsContent' => 'Nema događaja',
+                ],
             ],
         ]);
     }
@@ -130,7 +118,6 @@ class MyCalendarWidget extends CalendarWidget
 
         $events = collect();
 
-        // ===== RADNI NALOZI =====
         if ($this->showWorkOrders) {
             $workOrders = WorkOrder::query()
                 ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('launch_date', [$rangeStart, $rangeEnd]))
@@ -141,34 +128,26 @@ class MyCalendarWidget extends CalendarWidget
 
             foreach ($workOrders as $wo) {
                 $percent   = $wo->status === 'zavrsen' ? 100 : (int) round((float) ($wo->completion_percentage ?? 0));
-
-                // all-day interval: end je ekskluzivan
                 $startDate = Carbon::parse($wo->created_at)->addDay()->toDateString();
                 $endDate   = Carbon::parse($wo->launch_date)->addDay()->toDateString();
 
-                $editUrl = $this->resourceUrlSafe(WorkOrderResource::class, 'edit', $wo);
-
                 $events->push(
                     CalendarEvent::make($wo)
-                        ->title('🛠 RN ' . ($wo->work_order_number ?? $wo->id) . ' • ' . optional($wo->launch_date)->format('d.m') . ' • ' . $percent . '%')
+                        ->title('🛠 RN ' . ($wo->full_name ?? $wo->id) . ' • ' . $wo->launch_date?->format('d.m') . ' • ' . $percent . '%')
                         ->start($startDate)
                         ->end($endDate)
                         ->allDay(true)
-                        ->url($editUrl)
                         ->backgroundColor(self::COLOR_WORK_ORDER)
                         ->textColor('#ffffff')
-                        ->extendedProps([
-                            'type'    => 'A_wo',
-                            'percent' => $percent,
-                        ])
+                        ->extendedProps(['type' => 'work_order', 'percent' => $percent])
                 );
             }
         }
 
-        // ===== PORUDŽBINE =====
         if ($this->showOrders) {
             $orders = OrderRequest::query()
                 ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('created_at', [$rangeStart, $rangeEnd]))
+                ->with('customer:id,name')
                 ->limit(500)
                 ->get();
 
@@ -176,63 +155,38 @@ class MyCalendarWidget extends CalendarWidget
                 $startDate = Carbon::parse($or->created_at)->addDay()->toDateString();
                 $endDate   = Carbon::parse($or->created_at)->addDay()->toDateString();
 
-                $editUrl = $this->resourceUrlSafe(OrderRequestResource::class, 'edit', $or);
-
                 $events->push(
                     CalendarEvent::make($or)
-                        ->title('🧾 PO ' . ($or->order_code ?? $or->id) . ' • ' . ($or->customer_name ?? 'Kupac'))
+                        ->title('🧾 PO ' . ($or->order_code ?? $or->id))
                         ->start($startDate)
                         ->end($endDate)
                         ->allDay(true)
-                        ->url($editUrl)
                         ->backgroundColor(self::COLOR_ORDER)
                         ->textColor('#ffffff')
-                        ->extendedProps([
-                            'type' => 'C_order',   // << prioritet 3
-                        ])
+                        ->extendedProps(['type' => 'order_request'])
                 );
             }
         }
 
-        // ===== TASKOVI =====
         if ($this->showTasks) {
-            $currentUserId = auth()->id();
-
             $tasks = Task::query()
                 ->when($rangeStart && $rangeEnd, fn ($q) => $q->whereBetween('due_date', [$rangeStart, $rangeEnd]))
                 ->whereNotNull('due_date')
-                // ⬇️ PRAVI FILTER: vidi samo svoje (kreator) ili dodeljene (pivot)
-                ->where(function ($q) use ($currentUserId) {
-                    $q->where('creator_id', $currentUserId)
-                    ->orWhereHas('users', fn ($uq) => $uq->where('user_id', $currentUserId));
-                })
-                // učitaj samo moju pivot vezu (radi rutiranja na MyTask)
-                ->with(['users' => fn ($q) => $q->where('users.id', $currentUserId)->select('users.id')])
                 ->limit(500)
                 ->get();
 
             foreach ($tasks as $task) {
-                // all-day jednodnevni: end je ekskluzivan
-                $startDate = \Illuminate\Support\Carbon::parse($task->due_date)->addDay()->toDateString();
-                $endDate   = \Illuminate\Support\Carbon::parse($task->due_date)->addDay()->toDateString();
-
-                $isCreator     = (int) $task->creator_id === (int) $currentUserId;
-                $assignedToMe  = $task->users?->contains('id', $currentUserId) ?? false;
-
-                // Ako mi je dodeljen a nisam kreator → EditMyTask, inače EditTask
-                $editUrl = ($assignedToMe && ! $isCreator)
-                    ? \App\Filament\Resources\MyTaskResource::getUrl('edit', ['record' => $task])
-                    : \App\Filament\Resources\TaskResource::getUrl('edit', ['record' => $task]);
+                $date = Carbon::parse($task->due_date)->addDay()->toDateString();
 
                 $events->push(
-                    \Guava\Calendar\ValueObjects\CalendarEvent::make($task)
+                    CalendarEvent::make($task)
                         ->title('📌 ' . $task->title)
-                        ->start($startDate)->end($endDate)->allDay(true)
-                        ->url($editUrl)
-                        ->backgroundColor(self::COLOR_TASK)->textColor('#ffffff')
-                        ->extendedProps([
-                            'type' => 'B_task',    // << prioritet 2
-                        ])
+                        ->start($date)
+                        ->end($date)
+                        ->allDay(true)
+                        ->backgroundColor(self::COLOR_TASK)
+                        ->textColor('#ffffff')
+                        ->extendedProps(['type' => 'task'])
                 );
             }
         }
@@ -242,20 +196,11 @@ class MyCalendarWidget extends CalendarWidget
 
     public function getEventClickContextMenuActions(): array
     {
-        return []; // nema context menija
+        return [
+            // $this->viewAction()->label('Pregled')->slideOver(),
+        ];
     }
 
-    /** View URL sa fallback-om na edit ako view ne postoji */
-    private function resourceUrlSafe(string $resourceClass, string $page, $record, string $fallbackPage = 'edit'): string
-    {
-        try {
-            return $resourceClass::getUrl($page, ['record' => $record]);
-        } catch (\Throwable $e) {
-            return $resourceClass::getUrl($fallbackPage, ['record' => $record]);
-        }
-    }
-
-    // (Opciono) Ako više ne koristiš slideOver pregled, možeš obrisati ceo getSchema().
     public function getSchema(?string $model = null): ?array
     {
         return match ($model) {
@@ -280,7 +225,7 @@ class MyCalendarWidget extends CalendarWidget
                 Placeholder::make('broj')->label('Broj porudžbine')
                     ->content(fn (?OrderRequest $r) => $r?->order_code ?? (string)($r?->id ?? '—')),
                 Placeholder::make('kupac')->label('Kupac')
-                    ->content(fn (?OrderRequest $r) => $r?->customer_name ?? '—'),
+                    ->content(fn (?OrderRequest $r) => $r?->customer?->name ?? '—'),
                 Placeholder::make('status')->label('Status')
                     ->content(fn (?OrderRequest $r) => $r?->status ?? '—'),
                 Placeholder::make('kreirano')->label('Kreirano')

@@ -31,6 +31,7 @@ class RadijatorAdminPanelProvider extends PanelProvider
             ->login()
             ->brandName('Radijator Inženjering')
             ->brandLogo(asset('images/logo.png'))
+            // ->viteTheme('resources/css/filament/admin/theme.css')
             ->maxContentWidth('full')
             ->renderHook('panels::body.end', fn () => view('filament.layouts.app'))
             ->colors([

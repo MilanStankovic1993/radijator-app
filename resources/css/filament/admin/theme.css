@@ -1,26 +1,17 @@
-<meta name="csrf-token" content="{{ csrf_token() }}">
+/* Nema @tailwind base/components/utilities ovde. Ovo je samo za override. */
 
-<script>
-    window.Laravel = {
-        user: @json(auth()->user()),
-    };
-</script>
-
-@vite(['resources/css/app.css', 'resources/js/app.js'])
-@push('styles')
-<style>
-/* *** DARK ONLY, SKOPOVANO NA TVOJ WIDGET (.fim-cal) *** */
-/* radi i za .dark (Tailwind) i za .fi-dark (Filament) */
+/* Dark mode – skoupovano na tvoj widget (.fim-cal) i oba načina oznake mraka (.dark i .fi-dark) */
 .dark .fim-cal, .fi-dark .fim-cal {
-  --fc-border-color: #374151;
-  --fc-page-bg-color: #0b0f19;
-  --fc-neutral-bg-color: #111827;
-  --fc-today-bg-color: #1f2937;
-  --fc-list-event-hover-bg-color: #0f172a;
-  --fc-button-text-color: #e5e7eb;
+  /* FullCalendar CSS varijable */
+  --fc-border-color: #374151;                /* linije */
+  --fc-page-bg-color: #0b0f19;               /* pozadina */
+  --fc-neutral-bg-color: #111827;            /* hederi / list day */
+  --fc-today-bg-color: #1f2937;              /* “danas” */
+  --fc-list-event-hover-bg-color: #0f172a;   /* hover u list pogledu */
+  --fc-button-text-color: #e5e7eb;           /* boja teksta na FC dugmadima */
 }
 
-/* FC dugmad */
+/* Toolbar dugmad (FC standard tema) */
 .dark .fim-cal .fc .fc-button,
 .fi-dark .fim-cal .fc .fc-button {
   background-color: #1f2937 !important;
@@ -28,13 +19,13 @@
   color: var(--fc-button-text-color) !important;
 }
 
-/* granice mreže */
+/* DayGrid / TimeGrid slotovi (borderi se vuku iz varijable) */
 .dark .fim-cal .fc-theme-standard .fc-scrollgrid,
 .fi-dark .fim-cal .fc-theme-standard .fc-scrollgrid {
   border-color: var(--fc-border-color) !important;
 }
 
-/* list heder + hover */
+/* List pogledi – heder dana i redovi */
 .dark .fim-cal .fc .fc-list-day-cushion,
 .fi-dark .fim-cal .fc .fc-list-day-cushion {
   background: var(--fc-neutral-bg-color) !important;
@@ -45,7 +36,7 @@
   background: var(--fc-list-event-hover-bg-color) !important;
 }
 
-/* event tekst (pošto ti bojiš background u PHP-u) */
+/* Eventovi – samo osiguramo svetao tekst (ti već bojiš background kroz PHP) */
 .dark .fim-cal .fc .fc-h-event .fc-event-main,
 .fi-dark .fim-cal .fc .fc-h-event .fc-event-main {
   color: #e5e7eb !important;
@@ -56,5 +47,3 @@
 .fi-dark .fim-cal .fc a.fc-daygrid-more-link {
   color: #93c5fd !important;
 }
-</style>
-@endpush

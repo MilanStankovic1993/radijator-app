@@ -12,12 +12,15 @@ APP_DIR="/var/www/Projekat-Radijator-Inzenjering"   # putanja NA SERVERU
 GIT_BRANCH="main"
 
 PHP_BIN="/usr/bin/php"
-# Ako znaš tačnu putanju, postavi je; u suprotnom ostavi na /usr/bin/composer a skripta će auto-pronaći/instalirati.
-COMPOSER_BIN="/usr/bin/composer"
+COMPOSER_BIN="/usr/bin/composer"                    # auto-pronalazak/instalacija ako ne postoji
 
 PHP_FPM_SERVICE="php8.3-fpm"                        # "" ako ne želiš reload
 PUBLIC_BASE_URL="https://radijatorapp.duckdns.org"  # informativno
 WEB_USER="www-data"                                 # korisnik web servera (nginx/php-fpm)
+
+# Kontrola seedovanja / resetovanja baze (možeš pre poziva da prepišeš: RESET_DB=1 ili DO_SEED=1)
+RESET_DB="${RESET_DB:-0}"   # 1 = migrate:fresh --seed (drop svih tabela + repopulate)
+DO_SEED="${DO_SEED:-0}"     # 1 = posle migrate odradi db:seed --force
 
 # -------- Ne diraj ispod ovog reda --------
 set -euo pipefail
@@ -31,6 +34,8 @@ ssh -o StrictHostKeyChecking=accept-new "$SSH_USER@$SERVER_IP" \
   PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-}" \
   PUBLIC_BASE_URL="$PUBLIC_BASE_URL" \
   WEB_USER="$WEB_USER" \
+  RESET_DB="$RESET_DB" \
+  DO_SEED="$DO_SEED" \
   COMPOSER_ALLOW_SUPERUSER=1 \
   COMPOSER_MEMORY_LIMIT=-1 \
   bash -s <<'REMOTE'
@@ -44,6 +49,8 @@ log(){ echo -e "\n==> $*"; }
 PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-}"
 PUBLIC_BASE_URL="${PUBLIC_BASE_URL:-}"
 WEB_USER="${WEB_USER:-www-data}"
+RESET_DB="${RESET_DB:-0}"
+DO_SEED="${DO_SEED:-0}"
 
 # 0) Provera da repo postoji
 if [ ! -d "$APP_DIR/.git" ]; then
@@ -108,9 +115,18 @@ SECRET=$("$PHP_BIN" -r 'echo bin2hex(random_bytes(16));')
 log "Maintenance mode ON (secret=$SECRET)"
 "$PHP_BIN" artisan down --secret="$SECRET" --render="errors::503" || true
 
-# 6) Migracije i cache
-log "Migrate + seed (force)"
-"$PHP_BIN" artisan migrate --force --seed
+# 6) Migracije i (opciono) seed — bez duplikata
+log "Migrations (force)"
+if [ "$RESET_DB" = "1" ]; then
+  log "RESET_DB=1 → migrate:fresh --seed (drop sve tabele + ponovna inicijalizacija)"
+  "$PHP_BIN" artisan migrate:fresh --force --seed
+else
+  "$PHP_BIN" artisan migrate --force
+  if [ "$DO_SEED" = "1" ]; then
+    log "DO_SEED=1 → db:seed (force)"
+    "$PHP_BIN" artisan db:seed --force
+  fi
+fi
 
 log "Optimize & cache"
 "$PHP_BIN" artisan optimize:clear

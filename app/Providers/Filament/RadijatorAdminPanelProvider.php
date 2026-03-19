@@ -3,7 +3,6 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Resources\ArchivedWorkOrderResource;
-use App\Filament\Resources\WorkOrderResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -26,14 +25,11 @@ class RadijatorAdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
-            ->id('radijator_admin')
-            ->path('radijator_admin')
+            ->id('admin')
+            ->path('admin')
             ->login()
-            ->brandName('Radijator Inženjering')
-            ->brandLogo(asset('images/logo.png'))
-            // ->viteTheme('resources/css/filament/admin/theme.css')
+            ->brandName('Business Panel')
             ->maxContentWidth('full')
-            ->renderHook('panels::body.end', fn () => view('filament.layouts.app'))
             ->colors([
                 'primary' => Color::Amber,
             ])

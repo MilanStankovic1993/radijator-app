@@ -4,8 +4,19 @@ FROM php:8.3-fpm
 RUN apt-get update && apt-get install -y \
     nginx \
     supervisor \
-    git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev \
-    libonig-dev libxml2-dev libzip-dev libpq-dev default-mysql-client libicu-dev \
+    git \
+    curl \
+    zip \
+    unzip \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    libpq-dev \
+    default-mysql-client \
+    libicu-dev \
     postgresql-client
 
 # Instalacija Node.js 18.x za Vite/Filament build
@@ -31,7 +42,7 @@ RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
 # Kopiranje .env produkcionog fajla
 COPY .env.production .env
 
-# OBRIŠI default nginx konfiguraciju ako postoji
+# Obriši default nginx konfiguraciju ako postoji
 RUN [ -f /etc/nginx/conf.d/default.conf ] && rm /etc/nginx/conf.d/default.conf || true
 
 # Kopiranje naše nginx konfiguracije
@@ -42,22 +53,18 @@ COPY nginx/nginx.conf /etc/nginx/nginx.conf
 RUN ln -sf /dev/stdout /var/log/nginx/access.log \
  && ln -sf /dev/stderr /var/log/nginx/error.log
 
-# Laravel setup
+# Laravel / frontend dependencies
 RUN composer install --optimize-autoloader --no-dev
 RUN npm install && npm run build
 
-# Laravel cache & migracije
+# Laravel build setup bez DB komandi
 RUN php artisan clear-compiled && composer dump-autoload \
  && php artisan config:clear \
- && php artisan cache:clear \
- && php artisan config:cache \
- && php artisan route:clear && php artisan route:cache \
- && php artisan view:cache \
+ && php artisan route:clear \
+ && php artisan view:clear \
  && php artisan storage:link || true \
- && php artisan migrate --force \
- && php artisan db:seed --force \
  && php artisan livewire:publish --assets \
- && rm -rf public/build && php artisan filament:assets --no-interaction
+ && php artisan filament:assets --no-interaction
 
 # Kopiranje supervisor konfiguracije
 COPY supervisord.conf /etc/supervisord.conf
